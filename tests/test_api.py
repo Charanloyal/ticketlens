@@ -4,8 +4,16 @@ import pytest
 from fastapi.testclient import TestClient
 
 
-def test_root_endpoint(test_client: TestClient):
+def test_root_endpoint_html(test_client: TestClient):
     response = test_client.get("/")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert "TicketLens" in response.text
+    assert "Ticket Ingestion Workbench" in response.text
+
+
+def test_root_endpoint_json(test_client: TestClient):
+    response = test_client.get("/?format=json")
     assert response.status_code == 200
     data = response.json()
     assert data["service"] == "TicketLens IT Ticket Classification API"

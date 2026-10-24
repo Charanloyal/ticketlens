@@ -1,40 +1,40 @@
 {
-  "total_tickets_audited": 210,
+  "total_tickets_audited": 350,
   "class_distribution": {
-    "Incident": 83,
-    "Request": 61,
-    "Problem": 44,
-    "Change": 22
+    "Incident": 139,
+    "Request": 102,
+    "Problem": 73,
+    "Change": 36
   },
-  "class_imbalance_ratio": 3.77,
+  "class_imbalance_ratio": 3.86,
   "text_length_by_class": {
     "Incident": {
-      "mean_word_count": 59.2,
-      "median_word_count": 55,
+      "mean_word_count": 57.2,
+      "median_word_count": 53,
       "min_words": 7,
-      "max_words": 145
+      "max_words": 167
     },
     "Request": {
-      "mean_word_count": 62.1,
-      "median_word_count": 55,
+      "mean_word_count": 60.7,
+      "median_word_count": 60,
       "min_words": 8,
       "max_words": 257
     },
     "Problem": {
-      "mean_word_count": 65.0,
+      "mean_word_count": 57.9,
       "median_word_count": 53,
       "min_words": 7,
-      "max_words": 162
+      "max_words": 147
     },
     "Change": {
-      "mean_word_count": 87.8,
-      "median_word_count": 93,
-      "min_words": 16,
-      "max_words": 152
+      "mean_word_count": 73.0,
+      "median_word_count": 73,
+      "min_words": 11,
+      "max_words": 163
     }
   },
   "pii_risk_audit": {
-    "raw_sample_size": 210,
+    "raw_sample_size": 350,
     "emails_detected_pre_sanitization": 0,
     "phone_numbers_detected_pre_sanitization": 0,
     "ip_addresses_detected_pre_sanitization": 0,

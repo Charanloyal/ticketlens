@@ -1,32 +1,32 @@
 {
   "model_name": "DistilBERT (LoRA / PEFT)",
-  "accuracy": 0.4444,
-  "macro_f1": 0.3273,
-  "weighted_f1": 0.3816,
+  "accuracy": 0.6133,
+  "macro_f1": 0.3724,
+  "weighted_f1": 0.5009,
   "confusion_matrix": [
     [
       0,
-      5,
+      4,
       0,
-      0
+      4
     ],
     [
       0,
-      10,
-      7,
+      29,
+      0,
       1
     ],
     [
       0,
-      1,
-      8,
+      16,
+      0,
       0
     ],
     [
       0,
-      7,
       4,
-      2
+      0,
+      17
     ]
   ],
   "classification_report": {
@@ -34,46 +34,46 @@
       "precision": 0.0,
       "recall": 0.0,
       "f1-score": 0.0,
-      "support": 5.0
+      "support": 8.0
     },
     "Incident": {
-      "precision": 0.43478260869565216,
-      "recall": 0.5555555555555556,
-      "f1-score": 0.4878048780487805,
-      "support": 18.0
+      "precision": 0.5471698113207547,
+      "recall": 0.9666666666666667,
+      "f1-score": 0.6987951807228916,
+      "support": 30.0
     },
     "Problem": {
-      "precision": 0.42105263157894735,
-      "recall": 0.8888888888888888,
-      "f1-score": 0.5714285714285714,
-      "support": 9.0
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 16.0
     },
     "Request": {
-      "precision": 0.6666666666666666,
-      "recall": 0.15384615384615385,
-      "f1-score": 0.25,
-      "support": 13.0
+      "precision": 0.7727272727272727,
+      "recall": 0.8095238095238095,
+      "f1-score": 0.7906976744186046,
+      "support": 21.0
     },
-    "accuracy": 0.4444444444444444,
+    "accuracy": 0.6133333333333333,
     "macro avg": {
-      "precision": 0.38062547673531655,
-      "recall": 0.3995726495726496,
-      "f1-score": 0.32730836236933797,
-      "support": 45.0
+      "precision": 0.3299742710120068,
+      "recall": 0.444047619047619,
+      "f1-score": 0.372373213785374,
+      "support": 75.0
     },
     "weighted avg": {
-      "precision": 0.45071616238664297,
-      "recall": 0.4444444444444444,
-      "f1-score": 0.3816298877274487,
-      "support": 45.0
+      "precision": 0.4352315608919382,
+      "recall": 0.6133333333333333,
+      "f1-score": 0.5009134211263659,
+      "support": 75.0
     }
   },
   "latency": {
-    "mean_ms": 29.86,
-    "std_ms": 12.33,
-    "p50_ms": 30.68,
-    "p95_ms": 48.77,
-    "p99_ms": 53.57,
-    "throughput_samples_per_sec": 33.49
+    "mean_ms": 30.34,
+    "std_ms": 11.59,
+    "p50_ms": 27.5,
+    "p95_ms": 49.51,
+    "p99_ms": 52.08,
+    "throughput_samples_per_sec": 32.96
   }
 }

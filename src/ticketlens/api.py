@@ -1,12 +1,13 @@
-"""FastAPI production inference service for TicketLens."""
-
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
-from ticketlens.config import get_device, load_config
+from ticketlens.config import get_device, get_project_root, load_config
 from ticketlens.predict import TicketPredictor
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -42,6 +43,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount reports directory for figures and visualizations if present
+reports_dir = get_project_root() / "reports"
+if reports_dir.exists():
+    app.mount("/reports", StaticFiles(directory=str(reports_dir)), name="reports")
 
 
 class PredictRequest(BaseModel):
@@ -95,17 +101,27 @@ class MetadataResponse(BaseModel):
     confidence_threshold: float
 
 
-@app.get("/", tags=["General"])
-async def root():
-    """Service landing page and welcome message."""
-    return {
-        "service": "TicketLens IT Ticket Classification API",
-        "version": "0.1.0",
-        "status": "healthy",
-        "documentation": "/docs",
-        "health": "/health",
-        "metadata": "/metadata",
-    }
+@app.get("/", response_class=HTMLResponse, tags=["General"])
+@app.get("/demo", response_class=HTMLResponse, tags=["General"])
+async def root(request: Request, format: Optional[str] = None):
+    """Serve the interactive TicketLens live demo dashboard, or JSON status if requested."""
+    accept_header = request.headers.get("accept", "")
+    if format == "json" or ("application/json" in accept_header and "text/html" not in accept_header):
+        return JSONResponse({
+            "service": "TicketLens IT Ticket Classification API",
+            "version": "0.1.0",
+            "status": "healthy",
+            "documentation": "/docs",
+            "health": "/health",
+            "metadata": "/metadata",
+        })
+
+    template_path = Path(__file__).parent / "templates" / "index.html"
+    if template_path.exists():
+        with open(template_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+
+    return HTMLResponse("<h1>TicketLens API Operational</h1><p>Visit <a href='/docs'>/docs</a> for Swagger UI.</p>")
 
 
 @app.get("/health", response_model=HealthResponse, tags=["Monitoring"])

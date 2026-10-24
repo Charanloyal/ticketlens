@@ -3,343 +3,343 @@
     "top_positive_features": [
       {
         "feature": "request",
-        "weight": 0.9382
+        "weight": 1.2619
       },
       {
-        "feature": "current",
-        "weight": 0.9103
+        "feature": "improve",
+        "weight": 1.2049
       },
       {
-        "feature": "upgrade",
-        "weight": 0.8474
+        "feature": "update",
+        "weight": 1.1665
       },
       {
-        "feature": "analytics tools",
-        "weight": 0.7795
+        "feature": "an update",
+        "weight": 1.1442
       },
       {
-        "feature": "request for",
-        "weight": 0.7327
+        "feature": "enhance",
+        "weight": 0.9481
       },
       {
-        "feature": "as",
-        "weight": 0.7291
-      },
-      {
-        "feature": "tools",
-        "weight": 0.6818
-      },
-      {
-        "feature": "better",
-        "weight": 0.677
-      },
-      {
-        "feature": "of",
-        "weight": 0.6226
+        "feature": "requesting",
+        "weight": 0.923
       },
       {
         "feature": "for",
-        "weight": 0.6089
+        "weight": 0.8711
+      },
+      {
+        "feature": "current",
+        "weight": 0.8551
+      },
+      {
+        "feature": "to improve",
+        "weight": 0.796
+      },
+      {
+        "feature": "experience",
+        "weight": 0.7392
       }
     ],
     "top_negative_features": [
       {
-        "feature": "digital",
-        "weight": -0.553
-      },
-      {
         "feature": "problem",
-        "weight": -0.5192
-      },
-      {
-        "feature": "issue",
-        "weight": -0.4469
-      },
-      {
-        "feature": "brand",
-        "weight": -0.3839
-      },
-      {
-        "feature": "the issue",
-        "weight": -0.342
-      },
-      {
-        "feature": "strategies",
-        "weight": -0.3413
-      },
-      {
-        "feature": "due",
-        "weight": -0.3408
+        "weight": -0.6436
       },
       {
         "feature": "due to",
-        "weight": -0.3408
+        "weight": -0.5851
       },
       {
-        "feature": "marketing",
-        "weight": -0.329
+        "feature": "due",
+        "weight": -0.5851
       },
       {
-        "feature": "the problem",
-        "weight": -0.3002
+        "feature": "issue",
+        "weight": -0.5403
+      },
+      {
+        "feature": "about",
+        "weight": -0.4767
+      },
+      {
+        "feature": "the issue",
+        "weight": -0.4726
+      },
+      {
+        "feature": "there",
+        "weight": -0.4291
+      },
+      {
+        "feature": "have",
+        "weight": -0.4144
+      },
+      {
+        "feature": "breach",
+        "weight": -0.4097
+      },
+      {
+        "feature": "services",
+        "weight": -0.4075
       }
     ]
   },
   "Incident": {
     "top_positive_features": [
       {
-        "feature": "system",
-        "weight": 0.7715
-      },
-      {
         "feature": "issue",
-        "weight": 0.7059
-      },
-      {
-        "feature": "the issue",
-        "weight": 0.5922
-      },
-      {
-        "feature": "unexpected",
-        "weight": 0.5879
-      },
-      {
-        "feature": "resolve",
-        "weight": 0.5858
+        "weight": 0.9246
       },
       {
         "feature": "problem",
-        "weight": 0.5609
+        "weight": 0.8695
       },
       {
-        "feature": "to resolve",
-        "weight": 0.5369
+        "feature": "system",
+        "weight": 0.8584
       },
       {
-        "feature": "the problem",
-        "weight": 0.4884
-      },
-      {
-        "feature": "issues",
-        "weight": 0.4599
+        "feature": "have",
+        "weight": 0.6844
       },
       {
         "feature": "restarting",
-        "weight": 0.4533
+        "weight": 0.6715
+      },
+      {
+        "feature": "software",
+        "weight": 0.6629
+      },
+      {
+        "feature": "unexpected",
+        "weight": 0.6035
+      },
+      {
+        "feature": "crash",
+        "weight": 0.5669
+      },
+      {
+        "feature": "may",
+        "weight": 0.5639
+      },
+      {
+        "feature": "campaign",
+        "weight": 0.5516
       }
     ],
     "top_negative_features": [
       {
         "feature": "for",
-        "weight": -0.7309
+        "weight": -0.9257
       },
       {
         "feature": "you",
-        "weight": -0.5641
-      },
-      {
-        "feature": "project management",
-        "weight": -0.4696
-      },
-      {
-        "feature": "could you",
-        "weight": -0.4585
-      },
-      {
-        "feature": "management",
-        "weight": -0.4339
-      },
-      {
-        "feature": "it",
-        "weight": -0.4332
-      },
-      {
-        "feature": "project",
-        "weight": -0.4124
-      },
-      {
-        "feature": "growth",
-        "weight": -0.4079
+        "weight": -0.7409
       },
       {
         "feature": "on",
-        "weight": -0.4027
+        "weight": -0.6135
       },
       {
         "feature": "medical",
-        "weight": -0.4013
+        "weight": -0.6116
+      },
+      {
+        "feature": "payment",
+        "weight": -0.5997
+      },
+      {
+        "feature": "could you",
+        "weight": -0.5893
+      },
+      {
+        "feature": "enhance",
+        "weight": -0.5594
+      },
+      {
+        "feature": "growth",
+        "weight": -0.5446
+      },
+      {
+        "feature": "brand",
+        "weight": -0.5309
+      },
+      {
+        "feature": "measures",
+        "weight": -0.5057
       }
     ]
   },
   "Problem": {
     "top_positive_features": [
       {
-        "feature": "server",
-        "weight": 0.746
+        "feature": "issues",
+        "weight": 0.7972
+      },
+      {
+        "feature": "due",
+        "weight": 0.7545
+      },
+      {
+        "feature": "due to",
+        "weight": 0.7545
       },
       {
         "feature": "been",
-        "weight": 0.673
+        "weight": 0.7352
+      },
+      {
+        "feature": "unauthorized",
+        "weight": 0.6521
       },
       {
         "feature": "the server",
-        "weight": 0.6357
+        "weight": 0.6516
       },
       {
-        "feature": "during",
-        "weight": 0.6344
+        "feature": "might",
+        "weight": 0.6387
       },
       {
-        "feature": "problem with",
-        "weight": 0.6231
+        "feature": "need assistance",
+        "weight": 0.6382
       },
       {
-        "feature": "crashes",
-        "weight": 0.6006
+        "feature": "my",
+        "weight": 0.6283
       },
       {
-        "feature": "have been",
-        "weight": 0.5459
-      },
-      {
-        "feature": "problem",
-        "weight": 0.5392
-      },
-      {
-        "feature": "might be",
-        "weight": 0.5392
-      },
-      {
-        "feature": "not",
-        "weight": 0.5084
+        "feature": "inconsistencies",
+        "weight": 0.6048
       }
     ],
     "top_negative_features": [
       {
         "feature": "for",
-        "weight": -0.5759
+        "weight": -0.8955
       },
       {
-        "feature": "provide",
-        "weight": -0.5385
-      },
-      {
-        "feature": "you",
-        "weight": -0.5225
-      },
-      {
-        "feature": "could",
-        "weight": -0.4532
-      },
-      {
-        "feature": "could you",
-        "weight": -0.4407
+        "feature": "information",
+        "weight": -0.6723
       },
       {
         "feature": "request",
-        "weight": -0.4265
+        "weight": -0.5401
       },
       {
-        "feature": "on",
-        "weight": -0.3957
+        "feature": "integrating",
+        "weight": -0.5113
       },
       {
-        "feature": "tools",
-        "weight": -0.3902
+        "feature": "that",
+        "weight": -0.4937
       },
       {
-        "feature": "you provide",
-        "weight": -0.3878
+        "feature": "data analytics",
+        "weight": -0.4918
       },
       {
-        "feature": "investment",
-        "weight": -0.3563
+        "feature": "an",
+        "weight": -0.4804
+      },
+      {
+        "feature": "management",
+        "weight": -0.4085
+      },
+      {
+        "feature": "improve",
+        "weight": -0.3917
+      },
+      {
+        "feature": "project management",
+        "weight": -0.38
       }
     ]
   },
   "Request": {
     "top_positive_features": [
       {
-        "feature": "on",
-        "weight": 0.8492
-      },
-      {
-        "feature": "you",
-        "weight": 0.7797
-      },
-      {
-        "feature": "could you",
-        "weight": 0.7484
-      },
-      {
         "feature": "information on",
-        "weight": 0.7184
+        "weight": 1.0146
       },
       {
-        "feature": "about",
-        "weight": 0.7063
-      },
-      {
-        "feature": "inquiry",
-        "weight": 0.7049
-      },
-      {
-        "feature": "for",
-        "weight": 0.6979
-      },
-      {
-        "feature": "strategies",
-        "weight": 0.6943
-      },
-      {
-        "feature": "brand",
-        "weight": 0.6565
+        "feature": "on",
+        "weight": 1.0141
       },
       {
         "feature": "information",
-        "weight": 0.6554
+        "weight": 0.9874
+      },
+      {
+        "feature": "for",
+        "weight": 0.9501
+      },
+      {
+        "feature": "could you",
+        "weight": 0.8975
+      },
+      {
+        "feature": "brand",
+        "weight": 0.8334
+      },
+      {
+        "feature": "securing",
+        "weight": 0.8219
+      },
+      {
+        "feature": "strategies",
+        "weight": 0.8131
+      },
+      {
+        "feature": "you",
+        "weight": 0.8087
+      },
+      {
+        "feature": "about",
+        "weight": 0.7954
       }
     ],
     "top_negative_features": [
       {
         "feature": "issue",
-        "weight": -0.611
-      },
-      {
-        "feature": "we",
-        "weight": -0.5961
-      },
-      {
-        "feature": "problem",
-        "weight": -0.5808
+        "weight": -0.754
       },
       {
         "feature": "have",
-        "weight": -0.5303
+        "weight": -0.7091
+      },
+      {
+        "feature": "problem",
+        "weight": -0.6563
+      },
+      {
+        "feature": "an",
+        "weight": -0.6518
+      },
+      {
+        "feature": "update",
+        "weight": -0.6425
+      },
+      {
+        "feature": "we",
+        "weight": -0.6122
       },
       {
         "feature": "software",
-        "weight": -0.4708
+        "weight": -0.5865
       },
       {
-        "feature": "if",
-        "weight": -0.432
+        "feature": "has",
+        "weight": -0.5689
       },
       {
-        "feature": "the",
-        "weight": -0.431
+        "feature": "this",
+        "weight": -0.5448
       },
       {
-        "feature": "been",
-        "weight": -0.4293
-      },
-      {
-        "feature": "our",
-        "weight": -0.4293
-      },
-      {
-        "feature": "system",
-        "weight": -0.4264
+        "feature": "due",
+        "weight": -0.543
       }
     ]
   }

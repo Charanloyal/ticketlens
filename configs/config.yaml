@@ -16,7 +16,7 @@ dataset:
   test_ratio: 0.15
   deduplicate: true
   redact_pii: true
-  quick_mode_samples: 300
+  quick_mode_samples: 500
   full_mode_samples: 3000
 
 baseline:
@@ -34,9 +34,9 @@ transformer:
   max_length: 128
   batch_size: 16
   eval_batch_size: 32
-  learning_rate: 3.0e-5
+  learning_rate: 5.0e-5
   weight_decay: 0.01
-  epochs_quick: 1
+  epochs_quick: 2
   epochs_full: 3
   early_stopping_patience: 2
   use_peft: true

@@ -1,15 +1,15 @@
 # TicketLens: Model Evaluation & Benchmark Summary
 
 - **Dataset Source:** Tobi-Bueck/customer-support-tickets
-- **Held-Out Test Set Size:** 45 samples
+- **Held-Out Test Set Size:** 75 samples
 - **Evaluated Classes:** Change, Incident, Problem, Request
 
 ## Performance Comparison
 
 | Model Architecture | Accuracy | Macro-F1 | Weighted-F1 | P50 Latency (ms) | P95 Latency (ms) | Throughput (req/s) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **TF-IDF + Logistic Regression** | 0.6667 | 0.6206 | 0.6616 | 0.6 ms | 1.11 ms | 1213.91 req/s |
-| **DistilBERT (LoRA / PEFT)** | 0.4444 | 0.3273 | 0.3816 | 30.68 ms | 48.77 ms | 33.49 req/s |
+| **TF-IDF + Logistic Regression** | 0.7467 | 0.6709 | 0.7219 | 0.55 ms | 1.03 ms | 1656.84 req/s |
+| **DistilBERT (LoRA / PEFT)** | 0.6133 | 0.3724 | 0.5009 | 27.5 ms | 49.51 ms | 32.96 req/s |
 
 ## Operational Trade-Offs & Key Takeaways
 
