@@ -40,6 +40,14 @@ class TicketPredictor:
         """Load baseline and/or transformer models if artifacts exist."""
         # Load Baseline
         baseline_dir = Path(self.cfg["paths"]["model_dir"]) / "baseline"
+        if not (baseline_dir / "logistic_regression.joblib").exists():
+            try:
+                from ticketlens.train_baseline import train_baseline_model
+                logger.info("No baseline artifacts found. Bootstrapping quick baseline model for immediate serving...")
+                train_baseline_model(self.cfg, mode="quick", use_fixture=False)
+            except Exception as e:
+                logger.warning("Could not auto-bootstrap baseline model: %s", e)
+
         if (baseline_dir / "logistic_regression.joblib").exists():
             try:
                 self.baseline_vectorizer = joblib.load(baseline_dir / "tfidf_vectorizer.joblib")
