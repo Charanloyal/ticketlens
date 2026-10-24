@@ -4,9 +4,9 @@
 [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 [![Framework: FastAPI](https://img.shields.io/badge/Framework-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
 [![Transformer: DistilBERT](https://img.shields.io/badge/Model-DistilBERT%20LoRA-orange.svg)](https://huggingface.co/distilbert/distilbert-base-uncased)
-[![Tests: Pytest](https://img.shields.io/badge/Tests-16%20Passed-brightgreen.svg)](https://docs.pytest.org/)
+[![Tests: Pytest](https://img.shields.io/badge/Tests-17%20Passed-brightgreen.svg)](https://docs.pytest.org/)
 
-**TicketLens** is an end-to-end IT service desk ticket classification and triage engine. It classifies IT issues into standard ITIL categories (**Incident**, **Request**, **Problem**, **Change**) and evaluates a traditional sub-millisecond **TF-IDF + Logistic Regression** baseline against a contextual **DistilBERT** sequence classification transformer fine-tuned with **PEFT / LoRA**.
+**TicketLens** is an end-to-end IT service desk ticket classification and triage engine with an ultra-sleek, dark-mode glassmorphic web dashboard. It classifies IT issues into standard ITIL categories (**Incident**, **Request**, **Problem**, **Change**) and evaluates a traditional sub-millisecond **TF-IDF + Logistic Regression** baseline against a contextual **DistilBERT** sequence classification transformer fine-tuned with **PEFT / LoRA**.
 
 The platform provides dataset sanitization with automated PII scrubbing (emails, phone numbers, IP addresses), SHAP feature attribution, dataset-level bias audits, single-sample latency benchmarking, and a high-performance **FastAPI** service with automated confidence-gated routing.
 
@@ -326,6 +326,56 @@ docker run -p 8000:8000 --rm ticketlens:latest
 # 3. Test container health
 curl -f http://localhost:8000/health
 ```
+
+---
+
+## Deploying to Render Cloud
+
+TicketLens is configured out-of-the-box for seamless, production deployment to **[Render](https://render.com/)**.
+
+### Method 1: 1-Click Infrastructure Blueprint (Recommended)
+
+The repository includes a ready-to-use [`render.yaml`](render.yaml) specification file.
+
+1. Push your repository to GitHub: `https://github.com/Charanloyal/ticketlens`.
+2. Log in to [Render Dashboard](https://dashboard.render.com/).
+3. Click **New +** → **Blueprint**.
+4. Connect your `ticketlens` repository.
+5. Render will automatically detect `render.yaml` and configure:
+   - **Service Name:** `ticketlens`
+   - **Environment:** `Python 3.11+`
+   - **Build Command:** `pip install --upgrade pip && pip install -r requirements.txt && pip install -e .`
+   - **Start Command:** `uvicorn ticketlens.api:app --host 0.0.0.0 --port $PORT`
+   - **Health Check Path:** `/health`
+6. Click **Apply**. Render will deploy the application with live logging.
+
+### Method 2: Manual Web Service Setup
+
+If you prefer to configure the Web Service manually via Render UI:
+
+1. In Render Dashboard, click **New +** → **Web Service**.
+2. Connect your GitHub repository `https://github.com/Charanloyal/ticketlens`.
+3. Fill in the following settings:
+   - **Name:** `ticketlens`
+   - **Language / Runtime:** `Python`
+   - **Region:** Any (e.g. `Oregon (US West)` or `Frankfurt (EU)`)
+   - **Branch:** `main`
+   - **Build Command:**
+     ```bash
+     pip install --upgrade pip && pip install -r requirements.txt && pip install -e .
+     ```
+   - **Start Command:**
+     ```bash
+     uvicorn ticketlens.api:app --host 0.0.0.0 --port $PORT
+     ```
+   - **Plan:** `Free`
+4. Add the following **Environment Variables**:
+   - `PYTHON_VERSION`: `3.11.9`
+   - `TICKETLENS_ENV`: `production`
+   - `PYTHONPATH`: `src`
+   - `TICKETLENS_CONFIDENCE_THRESHOLD`: `0.80`
+5. Set **Health Check Path** under *Advanced*: `/health`.
+6. Click **Create Web Service**. Your live public application URL will be provisioned at `https://ticketlens-xxxx.onrender.com`.
 
 ---
 
