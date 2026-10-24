@@ -1,0 +1,16 @@
+{
+  "baseline": {
+    "mean_ms": 0.7,
+    "p50_ms": 0.79,
+    "p95_ms": 1.0,
+    "p99_ms": 1.04,
+    "throughput_req_per_sec": 1428.57
+  },
+  "transformer": {
+    "mean_ms": 13.43,
+    "p50_ms": 13.32,
+    "p95_ms": 14.92,
+    "p99_ms": 15.8,
+    "throughput_req_per_sec": 74.46
+  }
+}

@@ -1,0 +1,346 @@
+{
+  "Change": {
+    "top_positive_features": [
+      {
+        "feature": "request",
+        "weight": 0.9382
+      },
+      {
+        "feature": "current",
+        "weight": 0.9103
+      },
+      {
+        "feature": "upgrade",
+        "weight": 0.8474
+      },
+      {
+        "feature": "analytics tools",
+        "weight": 0.7795
+      },
+      {
+        "feature": "request for",
+        "weight": 0.7327
+      },
+      {
+        "feature": "as",
+        "weight": 0.7291
+      },
+      {
+        "feature": "tools",
+        "weight": 0.6818
+      },
+      {
+        "feature": "better",
+        "weight": 0.677
+      },
+      {
+        "feature": "of",
+        "weight": 0.6226
+      },
+      {
+        "feature": "for",
+        "weight": 0.6089
+      }
+    ],
+    "top_negative_features": [
+      {
+        "feature": "digital",
+        "weight": -0.553
+      },
+      {
+        "feature": "problem",
+        "weight": -0.5192
+      },
+      {
+        "feature": "issue",
+        "weight": -0.4469
+      },
+      {
+        "feature": "brand",
+        "weight": -0.3839
+      },
+      {
+        "feature": "the issue",
+        "weight": -0.342
+      },
+      {
+        "feature": "strategies",
+        "weight": -0.3413
+      },
+      {
+        "feature": "due",
+        "weight": -0.3408
+      },
+      {
+        "feature": "due to",
+        "weight": -0.3408
+      },
+      {
+        "feature": "marketing",
+        "weight": -0.329
+      },
+      {
+        "feature": "the problem",
+        "weight": -0.3002
+      }
+    ]
+  },
+  "Incident": {
+    "top_positive_features": [
+      {
+        "feature": "system",
+        "weight": 0.7715
+      },
+      {
+        "feature": "issue",
+        "weight": 0.7059
+      },
+      {
+        "feature": "the issue",
+        "weight": 0.5922
+      },
+      {
+        "feature": "unexpected",
+        "weight": 0.5879
+      },
+      {
+        "feature": "resolve",
+        "weight": 0.5858
+      },
+      {
+        "feature": "problem",
+        "weight": 0.5609
+      },
+      {
+        "feature": "to resolve",
+        "weight": 0.5369
+      },
+      {
+        "feature": "the problem",
+        "weight": 0.4884
+      },
+      {
+        "feature": "issues",
+        "weight": 0.4599
+      },
+      {
+        "feature": "restarting",
+        "weight": 0.4533
+      }
+    ],
+    "top_negative_features": [
+      {
+        "feature": "for",
+        "weight": -0.7309
+      },
+      {
+        "feature": "you",
+        "weight": -0.5641
+      },
+      {
+        "feature": "project management",
+        "weight": -0.4696
+      },
+      {
+        "feature": "could you",
+        "weight": -0.4585
+      },
+      {
+        "feature": "management",
+        "weight": -0.4339
+      },
+      {
+        "feature": "it",
+        "weight": -0.4332
+      },
+      {
+        "feature": "project",
+        "weight": -0.4124
+      },
+      {
+        "feature": "growth",
+        "weight": -0.4079
+      },
+      {
+        "feature": "on",
+        "weight": -0.4027
+      },
+      {
+        "feature": "medical",
+        "weight": -0.4013
+      }
+    ]
+  },
+  "Problem": {
+    "top_positive_features": [
+      {
+        "feature": "server",
+        "weight": 0.746
+      },
+      {
+        "feature": "been",
+        "weight": 0.673
+      },
+      {
+        "feature": "the server",
+        "weight": 0.6357
+      },
+      {
+        "feature": "during",
+        "weight": 0.6344
+      },
+      {
+        "feature": "problem with",
+        "weight": 0.6231
+      },
+      {
+        "feature": "crashes",
+        "weight": 0.6006
+      },
+      {
+        "feature": "have been",
+        "weight": 0.5459
+      },
+      {
+        "feature": "problem",
+        "weight": 0.5392
+      },
+      {
+        "feature": "might be",
+        "weight": 0.5392
+      },
+      {
+        "feature": "not",
+        "weight": 0.5084
+      }
+    ],
+    "top_negative_features": [
+      {
+        "feature": "for",
+        "weight": -0.5759
+      },
+      {
+        "feature": "provide",
+        "weight": -0.5385
+      },
+      {
+        "feature": "you",
+        "weight": -0.5225
+      },
+      {
+        "feature": "could",
+        "weight": -0.4532
+      },
+      {
+        "feature": "could you",
+        "weight": -0.4407
+      },
+      {
+        "feature": "request",
+        "weight": -0.4265
+      },
+      {
+        "feature": "on",
+        "weight": -0.3957
+      },
+      {
+        "feature": "tools",
+        "weight": -0.3902
+      },
+      {
+        "feature": "you provide",
+        "weight": -0.3878
+      },
+      {
+        "feature": "investment",
+        "weight": -0.3563
+      }
+    ]
+  },
+  "Request": {
+    "top_positive_features": [
+      {
+        "feature": "on",
+        "weight": 0.8492
+      },
+      {
+        "feature": "you",
+        "weight": 0.7797
+      },
+      {
+        "feature": "could you",
+        "weight": 0.7484
+      },
+      {
+        "feature": "information on",
+        "weight": 0.7184
+      },
+      {
+        "feature": "about",
+        "weight": 0.7063
+      },
+      {
+        "feature": "inquiry",
+        "weight": 0.7049
+      },
+      {
+        "feature": "for",
+        "weight": 0.6979
+      },
+      {
+        "feature": "strategies",
+        "weight": 0.6943
+      },
+      {
+        "feature": "brand",
+        "weight": 0.6565
+      },
+      {
+        "feature": "information",
+        "weight": 0.6554
+      }
+    ],
+    "top_negative_features": [
+      {
+        "feature": "issue",
+        "weight": -0.611
+      },
+      {
+        "feature": "we",
+        "weight": -0.5961
+      },
+      {
+        "feature": "problem",
+        "weight": -0.5808
+      },
+      {
+        "feature": "have",
+        "weight": -0.5303
+      },
+      {
+        "feature": "software",
+        "weight": -0.4708
+      },
+      {
+        "feature": "if",
+        "weight": -0.432
+      },
+      {
+        "feature": "the",
+        "weight": -0.431
+      },
+      {
+        "feature": "been",
+        "weight": -0.4293
+      },
+      {
+        "feature": "our",
+        "weight": -0.4293
+      },
+      {
+        "feature": "system",
+        "weight": -0.4264
+      }
+    ]
+  }
+}

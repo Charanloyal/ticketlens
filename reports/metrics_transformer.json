@@ -1,0 +1,71 @@
+{
+  "model_type": "DistilBERT (PEFT / LoRA)",
+  "pretrained_backbone": "distilbert/distilbert-base-uncased",
+  "mode": "quick",
+  "device": "cpu",
+  "use_peft": true,
+  "epochs": 1,
+  "train_samples": 210,
+  "val_samples": 45,
+  "test_samples": 45,
+  "classes": [
+    "Change",
+    "Incident",
+    "Problem",
+    "Request"
+  ],
+  "training_duration_seconds": 29.857,
+  "validation_accuracy": 0.4667,
+  "validation_macro_f1": 0.3797,
+  "validation_weighted_f1": 0.4685,
+  "latency_p50_ms": 31.103,
+  "latency_p95_ms": 51.667,
+  "training_history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.3813,
+      "val_loss": 1.3522,
+      "val_acc": 0.4667,
+      "val_macro_f1": 0.3797
+    }
+  ],
+  "classification_report": {
+    "Change": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 4.0
+    },
+    "Incident": {
+      "precision": 0.5,
+      "recall": 0.5,
+      "f1-score": 0.5,
+      "support": 18.0
+    },
+    "Problem": {
+      "precision": 0.2857142857142857,
+      "recall": 0.6,
+      "f1-score": 0.3870967741935484,
+      "support": 10.0
+    },
+    "Request": {
+      "precision": 1.0,
+      "recall": 0.46153846153846156,
+      "f1-score": 0.631578947368421,
+      "support": 13.0
+    },
+    "accuracy": 0.4666666666666667,
+    "macro avg": {
+      "precision": 0.4464285714285714,
+      "recall": 0.39038461538461544,
+      "f1-score": 0.3796689303904923,
+      "support": 45.0
+    },
+    "weighted avg": {
+      "precision": 0.5523809523809524,
+      "recall": 0.4666666666666667,
+      "f1-score": 0.4684776457272213,
+      "support": 45.0
+    }
+  }
+}

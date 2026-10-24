@@ -1,0 +1,79 @@
+{
+  "model_name": "TF-IDF + Logistic Regression",
+  "accuracy": 0.6667,
+  "macro_f1": 0.6206,
+  "weighted_f1": 0.6616,
+  "confusion_matrix": [
+    [
+      2,
+      0,
+      1,
+      2
+    ],
+    [
+      0,
+      12,
+      6,
+      0
+    ],
+    [
+      0,
+      6,
+      3,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      13
+    ]
+  ],
+  "classification_report": {
+    "Change": {
+      "precision": 1.0,
+      "recall": 0.4,
+      "f1-score": 0.5714285714285714,
+      "support": 5.0
+    },
+    "Incident": {
+      "precision": 0.6666666666666666,
+      "recall": 0.6666666666666666,
+      "f1-score": 0.6666666666666666,
+      "support": 18.0
+    },
+    "Problem": {
+      "precision": 0.3,
+      "recall": 0.3333333333333333,
+      "f1-score": 0.3157894736842105,
+      "support": 9.0
+    },
+    "Request": {
+      "precision": 0.8666666666666667,
+      "recall": 1.0,
+      "f1-score": 0.9285714285714286,
+      "support": 13.0
+    },
+    "accuracy": 0.6666666666666666,
+    "macro avg": {
+      "precision": 0.7083333333333333,
+      "recall": 0.6,
+      "f1-score": 0.6206140350877194,
+      "support": 45.0
+    },
+    "weighted avg": {
+      "precision": 0.6881481481481482,
+      "recall": 0.6666666666666666,
+      "f1-score": 0.6615705931495405,
+      "support": 45.0
+    }
+  },
+  "latency": {
+    "mean_ms": 0.82,
+    "std_ms": 1.1,
+    "p50_ms": 0.6,
+    "p95_ms": 1.11,
+    "p99_ms": 5.36,
+    "throughput_samples_per_sec": 1213.91
+  }
+}

@@ -1,0 +1,170 @@
+{
+  "Change": [
+    {
+      "feature": "as",
+      "mean_abs_shap": 0.02403
+    },
+    {
+      "feature": "request",
+      "mean_abs_shap": 0.02125
+    },
+    {
+      "feature": "for",
+      "mean_abs_shap": 0.02058
+    },
+    {
+      "feature": "data",
+      "mean_abs_shap": 0.01996
+    },
+    {
+      "feature": "security",
+      "mean_abs_shap": 0.01791
+    },
+    {
+      "feature": "problem",
+      "mean_abs_shap": 0.01722
+    },
+    {
+      "feature": "we",
+      "mean_abs_shap": 0.01558
+    },
+    {
+      "feature": "issue",
+      "mean_abs_shap": 0.01532
+    },
+    {
+      "feature": "our",
+      "mean_abs_shap": 0.01517
+    },
+    {
+      "feature": "request for",
+      "mean_abs_shap": 0.01405
+    }
+  ],
+  "Incident": [
+    {
+      "feature": "for",
+      "mean_abs_shap": 0.0247
+    },
+    {
+      "feature": "issue",
+      "mean_abs_shap": 0.02421
+    },
+    {
+      "feature": "medical",
+      "mean_abs_shap": 0.02228
+    },
+    {
+      "feature": "the issue",
+      "mean_abs_shap": 0.0195
+    },
+    {
+      "feature": "problem",
+      "mean_abs_shap": 0.0186
+    },
+    {
+      "feature": "you",
+      "mean_abs_shap": 0.01796
+    },
+    {
+      "feature": "management",
+      "mean_abs_shap": 0.01719
+    },
+    {
+      "feature": "project management",
+      "mean_abs_shap": 0.01698
+    },
+    {
+      "feature": "system",
+      "mean_abs_shap": 0.01683
+    },
+    {
+      "feature": "medical data",
+      "mean_abs_shap": 0.01552
+    }
+  ],
+  "Problem": [
+    {
+      "feature": "been",
+      "mean_abs_shap": 0.02631
+    },
+    {
+      "feature": "server",
+      "mean_abs_shap": 0.02217
+    },
+    {
+      "feature": "for",
+      "mean_abs_shap": 0.01946
+    },
+    {
+      "feature": "problem",
+      "mean_abs_shap": 0.01788
+    },
+    {
+      "feature": "might be",
+      "mean_abs_shap": 0.01785
+    },
+    {
+      "feature": "you",
+      "mean_abs_shap": 0.01664
+    },
+    {
+      "feature": "might",
+      "mean_abs_shap": 0.01591
+    },
+    {
+      "feature": "on",
+      "mean_abs_shap": 0.01515
+    },
+    {
+      "feature": "have been",
+      "mean_abs_shap": 0.01488
+    },
+    {
+      "feature": "during",
+      "mean_abs_shap": 0.0145
+    }
+  ],
+  "Request": [
+    {
+      "feature": "on",
+      "mean_abs_shap": 0.03251
+    },
+    {
+      "feature": "you",
+      "mean_abs_shap": 0.02482
+    },
+    {
+      "feature": "for",
+      "mean_abs_shap": 0.02359
+    },
+    {
+      "feature": "issue",
+      "mean_abs_shap": 0.02095
+    },
+    {
+      "feature": "information",
+      "mean_abs_shap": 0.02075
+    },
+    {
+      "feature": "we",
+      "mean_abs_shap": 0.02065
+    },
+    {
+      "feature": "medical data",
+      "mean_abs_shap": 0.01971
+    },
+    {
+      "feature": "medical",
+      "mean_abs_shap": 0.01964
+    },
+    {
+      "feature": "problem",
+      "mean_abs_shap": 0.01926
+    },
+    {
+      "feature": "about",
+      "mean_abs_shap": 0.0186
+    }
+  ]
+}

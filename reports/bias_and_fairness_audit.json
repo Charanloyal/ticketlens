@@ -1,0 +1,43 @@
+{
+  "total_tickets_audited": 210,
+  "class_distribution": {
+    "Incident": 83,
+    "Request": 61,
+    "Problem": 44,
+    "Change": 22
+  },
+  "class_imbalance_ratio": 3.77,
+  "text_length_by_class": {
+    "Incident": {
+      "mean_word_count": 59.2,
+      "median_word_count": 55,
+      "min_words": 7,
+      "max_words": 145
+    },
+    "Request": {
+      "mean_word_count": 62.1,
+      "median_word_count": 55,
+      "min_words": 8,
+      "max_words": 257
+    },
+    "Problem": {
+      "mean_word_count": 65.0,
+      "median_word_count": 53,
+      "min_words": 7,
+      "max_words": 162
+    },
+    "Change": {
+      "mean_word_count": 87.8,
+      "median_word_count": 93,
+      "min_words": 16,
+      "max_words": 152
+    }
+  },
+  "pii_risk_audit": {
+    "raw_sample_size": 210,
+    "emails_detected_pre_sanitization": 0,
+    "phone_numbers_detected_pre_sanitization": 0,
+    "ip_addresses_detected_pre_sanitization": 0,
+    "sanitization_status": "PII scrubbing enabled (regex redaction)"
+  }
+}

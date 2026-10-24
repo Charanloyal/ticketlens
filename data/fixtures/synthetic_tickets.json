@@ -1,0 +1,66 @@
+[
+  {
+    "subject": "VPN Disconnected Unexpectedly",
+    "body": "User was disconnected from internal VPN while working remotely. Reconnection attempts fail with error TLS handshake timed out.",
+    "type": "Incident",
+    "queue": "Technical Support",
+    "priority": "High",
+    "language": "en"
+  },
+  {
+    "subject": "Laptop screen flickering intermittently",
+    "body": "Dell Latitude screen turns black for two seconds every 10 minutes when connected to USB-C docking station.",
+    "type": "Incident",
+    "queue": "IT Support",
+    "priority": "Medium",
+    "language": "en"
+  },
+  {
+    "subject": "Request for Second External Monitor",
+    "body": "Please provide approval and procurement for a secondary 27-inch HDMI monitor for data visualization tasks.",
+    "type": "Request",
+    "queue": "IT Support",
+    "priority": "Low",
+    "language": "en"
+  },
+  {
+    "subject": "Access Request for PostgreSQL Analytics Replica",
+    "body": "Requesting read-only database credentials for new business intelligence analyst joining the data engineering squad.",
+    "type": "Request",
+    "queue": "Technical Support",
+    "priority": "Medium",
+    "language": "en"
+  },
+  {
+    "subject": "Root Cause Analysis: Recurring Gateway Outages",
+    "body": "The API gateway has suffered three cascading dropouts this week during peak traffic. Underlying socket exhaustion suspected.",
+    "type": "Problem",
+    "queue": "Service Outages and Maintenance",
+    "priority": "Critical",
+    "language": "en"
+  },
+  {
+    "subject": "Investigation: Memory leak in auth microservice",
+    "body": "Heap dump analysis indicates JWT validation cache retains references to expired sessions indefinitely.",
+    "type": "Problem",
+    "queue": "Technical Support",
+    "priority": "High",
+    "language": "en"
+  },
+  {
+    "subject": "Firewall Rule Modification for New Staging VPC",
+    "body": "Scheduled change request to open port 443 on subnet 10.240.0.0/16 to allow ingress from internal runner nodes.",
+    "type": "Change",
+    "queue": "Service Outages and Maintenance",
+    "priority": "Medium",
+    "language": "en"
+  },
+  {
+    "subject": "Scheduled Maintenance: Upgrade Kubernetes Node Pool",
+    "body": "Rolling update of production worker nodes from v1.28 to v1.29 during Sunday maintenance window.",
+    "type": "Change",
+    "queue": "Service Outages and Maintenance",
+    "priority": "Low",
+    "language": "en"
+  }
+]

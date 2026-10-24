@@ -1,0 +1,62 @@
+project_name: "TicketLens"
+version: "0.1.0"
+random_seed: 42
+
+dataset:
+  name: "Tobi-Bueck/customer-support-tickets"
+  source_url: "https://huggingface.co/datasets/Tobi-Bueck/customer-support-tickets"
+  license: "CC-BY-NC-4.0"
+  language: "en"
+  target_column: "type" # 4 ITSM/ITIL categories: Incident, Request, Problem, Change
+  text_columns:
+    - "subject"
+    - "body"
+  train_ratio: 0.70
+  val_ratio: 0.15
+  test_ratio: 0.15
+  deduplicate: true
+  redact_pii: true
+  quick_mode_samples: 300
+  full_mode_samples: 3000
+
+baseline:
+  model_name: "tfidf_logistic_regression"
+  ngram_range: [1, 2]
+  max_features: 8000
+  min_df: 2
+  sublinear_tf: true
+  c_param: 1.5
+  max_iter: 1000
+  class_weight: "balanced"
+
+transformer:
+  pretrained_model: "distilbert/distilbert-base-uncased"
+  max_length: 128
+  batch_size: 16
+  eval_batch_size: 32
+  learning_rate: 3.0e-5
+  weight_decay: 0.01
+  epochs_quick: 1
+  epochs_full: 3
+  early_stopping_patience: 2
+  use_peft: true
+  lora_r: 8
+  lora_alpha: 16
+  lora_dropout: 0.10
+  lora_target_modules:
+    - "q_lin"
+    - "v_lin"
+  device: "auto"
+
+inference:
+  confidence_threshold: 0.80 # >= 0.80: "Auto Accept", < 0.80: "Needs Review"
+  default_model: "transformer"
+  max_input_length: 2000
+
+paths:
+  raw_data_dir: "data/raw"
+  processed_data_dir: "data/processed"
+  model_dir: "artifacts/models"
+  reports_dir: "reports"
+  figures_dir: "reports/figures"
+  fixtures_file: "data/fixtures/synthetic_tickets.json"
