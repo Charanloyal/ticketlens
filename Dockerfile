@@ -21,9 +21,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY src/ /app/src/
 COPY configs/ /app/configs/
 COPY data/fixtures/ /app/data/fixtures/
-COPY pyproject.toml .
+COPY pyproject.toml setup.py main.py ./
 
-RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir .
 
 RUN useradd -m -u 1000 appuser && \
     mkdir -p /app/artifacts/models /app/reports /app/data && \
@@ -36,4 +36,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
-CMD ["sh", "-c", "uvicorn ticketlens.api:app --host 0.0.0.0 --port ${PORT}"]
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT}"]

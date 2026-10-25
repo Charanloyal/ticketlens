@@ -8,8 +8,8 @@ services:
     region: oregon
     plan: free
     autoDeploy: true
-    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt && pip install -e ."
-    startCommand: "uvicorn ticketlens.api:app --host 0.0.0.0 --port $PORT"
+    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt && pip install ."
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
     healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
@@ -17,6 +17,6 @@ services:
       - key: TICKETLENS_ENV
         value: production
       - key: PYTHONPATH
-        value: src
+        value: src:.
       - key: TICKETLENS_CONFIDENCE_THRESHOLD
         value: "0.80"

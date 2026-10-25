@@ -344,14 +344,14 @@ The repository includes a ready-to-use [`render.yaml`](render.yaml) specificatio
 5. Render will automatically detect `render.yaml` and configure:
    - **Service Name:** `ticketlens`
    - **Environment:** `Python 3.11+`
-   - **Build Command:** `pip install --upgrade pip && pip install -r requirements.txt && pip install -e .`
-   - **Start Command:** `uvicorn ticketlens.api:app --host 0.0.0.0 --port $PORT`
+   - **Build Command:** `pip install --upgrade pip && pip install -r requirements.txt && pip install .`
+   - **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
    - **Health Check Path:** `/health`
 6. Click **Apply**. Render will deploy the application with live logging.
 
 ### Method 2: Manual Web Service Setup
 
-If you prefer to configure the Web Service manually via Render UI:
+If you configure the Web Service manually via Render UI:
 
 1. In Render Dashboard, click **New +** → **Web Service**.
 2. Connect your GitHub repository `https://github.com/Charanloyal/ticketlens`.
@@ -362,11 +362,11 @@ If you prefer to configure the Web Service manually via Render UI:
    - **Branch:** `main`
    - **Build Command:**
      ```bash
-     pip install --upgrade pip && pip install -r requirements.txt && pip install -e .
+     pip install --upgrade pip && pip install -r requirements.txt && pip install .
      ```
    - **Start Command:**
      ```bash
-     uvicorn ticketlens.api:app --host 0.0.0.0 --port $PORT
+     uvicorn main:app --host 0.0.0.0 --port $PORT
      ```
    - **Plan:** `Free`
 4. Add the following **Environment Variables**:
