@@ -1,0 +1,15 @@
+# Lightweight serving dependencies for Render (free plan: 512 MB RAM).
+# Excludes torch/transformers/peft/shap/plotting, which are only needed for
+# transformer training, evaluation, and explainability (see requirements.txt).
+fastapi>=0.110.0,<1.0.0
+uvicorn[standard]>=0.28.0,<1.0.0
+pydantic>=2.6.0,<3.0.0
+scikit-learn>=1.4.0,<2.0.0
+scipy>=1.12.0,<2.0.0
+pandas>=2.2.0,<4.0.0
+numpy>=1.26.0,<3.0.0
+joblib>=1.3.0,<2.0.0
+pyyaml>=6.0.0,<7.0.0
+pyarrow>=15.0.0,<26.0.0
+# Used only at build time to download the training dataset from Hugging Face.
+datasets>=2.18.0,<6.0.0

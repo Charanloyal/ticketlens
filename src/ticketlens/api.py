@@ -17,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
-from ticketlens.config import get_device, get_project_root, load_config
+from ticketlens.config import get_project_root, load_config
 from ticketlens.predict import TicketPredictor
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -152,14 +152,18 @@ async def get_metadata():
     """Retrieve system configuration, model version, and target category information."""
     cfg = load_config()
     loaded = predictor.get_loaded_models() if predictor else []
+    default_model = cfg.get("inference", {}).get("default_model", "transformer")
+    if loaded and default_model not in loaded:
+        # Report the model that will actually serve requests after fallback.
+        default_model = loaded[0]
     return MetadataResponse(
         project_name=cfg.get("project_name", "TicketLens"),
         version=cfg.get("version", "0.1.0"),
         dataset_name=cfg.get("dataset", {}).get("name", "Tobi-Bueck/customer-support-tickets"),
         target_categories=["Incident", "Request", "Problem", "Change"],
-        device=str(get_device()),
+        device=str(predictor.device) if predictor else "cpu",
         models_available=loaded,
-        default_model=cfg.get("inference", {}).get("default_model", "transformer"),
+        default_model=default_model,
         confidence_threshold=float(cfg.get("inference", {}).get("confidence_threshold", 0.80)),
     )
 

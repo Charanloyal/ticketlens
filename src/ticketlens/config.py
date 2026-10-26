@@ -2,9 +2,11 @@
 
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 import yaml
-import torch
+
+if TYPE_CHECKING:
+    import torch
 
 
 def get_project_root() -> Path:
@@ -14,8 +16,16 @@ def get_project_root() -> Path:
     return current_file.parent.parent.parent
 
 
-def get_device() -> torch.device:
-    """Detect and return CUDA device if available, otherwise CPU."""
+def get_device() -> Union["torch.device", str]:
+    """Detect and return CUDA device if available, otherwise CPU.
+
+    torch is imported lazily so the lightweight serving image (no torch installed)
+    can still start; in that case the plain string "cpu" is returned.
+    """
+    try:
+        import torch
+    except ImportError:
+        return "cpu"
     if torch.cuda.is_available():
         return torch.device("cuda")
     return torch.device("cpu")

@@ -1200,7 +1200,7 @@
           </div>
           <div class="telemetry-tile">
             <span>Build Command</span>
-            <strong style="font-size: 12px;">pip install -r requirements.txt && pip install .</strong>
+            <strong style="font-size: 12px;">pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.train_baseline --mode full</strong>
           </div>
           <div class="telemetry-tile">
             <span>Start Command</span>
@@ -1217,8 +1217,8 @@
   - type: web
     name: ticketlens
     runtime: python
-    buildCommand: "pip install -r requirements.txt && pip install ."
-    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
+    buildCommand: "pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.train_baseline --mode full"
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'"
     healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION

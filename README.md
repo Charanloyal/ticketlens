@@ -344,10 +344,17 @@ The repository includes a ready-to-use [`render.yaml`](render.yaml) specificatio
 5. Render will automatically detect `render.yaml` and configure:
    - **Service Name:** `ticketlens`
    - **Environment:** `Python 3.11+`
-   - **Build Command:** `pip install --upgrade pip && pip install -r requirements.txt && pip install .`
-   - **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
+   - **Build Command:** `pip install --upgrade pip && pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.train_baseline --mode full`
+   - **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'`
    - **Health Check Path:** `/health`
 6. Click **Apply**. Render will deploy the application with live logging.
+
+> **Why a separate `requirements-render.txt`?** Render's free plan has a 512 MB RAM limit. The full
+> `requirements.txt` pulls in PyTorch, Transformers, SHAP and plotting libraries, which alone exceed that
+> limit. The Render build installs only the lightweight serving stack and trains the TF-IDF + Logistic
+> Regression model during the build, so the server binds `$PORT` within seconds and runs in ~200 MB.
+> Requests for the `transformer` model automatically fall back to the baseline when no fine-tuned
+> transformer artifacts are present.
 
 ### Method 2: Manual Web Service Setup
 
@@ -362,17 +369,17 @@ If you configure the Web Service manually via Render UI:
    - **Branch:** `main`
    - **Build Command:**
      ```bash
-     pip install --upgrade pip && pip install -r requirements.txt && pip install .
+     pip install --upgrade pip && pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.train_baseline --mode full
      ```
    - **Start Command:**
      ```bash
-     uvicorn main:app --host 0.0.0.0 --port $PORT
+     uvicorn main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'
      ```
    - **Plan:** `Free`
 4. Add the following **Environment Variables**:
    - `PYTHON_VERSION`: `3.11.9`
    - `TICKETLENS_ENV`: `production`
-   - `PYTHONPATH`: `src`
+   - `PYTHONPATH`: `src:.`
    - `TICKETLENS_CONFIDENCE_THRESHOLD`: `0.80`
 5. Set **Health Check Path** under *Advanced*: `/health`.
 6. Click **Create Web Service**. Your live public application URL will be provisioned at `https://ticketlens-xxxx.onrender.com`.
@@ -383,6 +390,8 @@ If you configure the Web Service manually via Render UI:
 
 - **Issue:** `ModuleNotFoundError: No module named 'ticketlens'`
   - **Resolution:** Run `pip install -e .` inside the active virtual environment to install the project package in editable mode.
+- **Issue:** Render deploy fails with `Out of memory (used over 512Mi)` / `No open ports detected`
+  - **Resolution:** Make sure the service uses `requirements-render.txt` (not `requirements.txt`) and the build command from `render.yaml`. Installing PyTorch/Transformers or training at startup exceeds the free-plan memory limit.
 - **Issue:** `CUDA not detected / Using CPU`
   - **Resolution:** `TicketLens` automatically detects whether CUDA is available and selects `cuda` when present, gracefully falling back to `cpu` without configuration changes.
 - **Issue:** `Hugging Face download timeout or offline environment`

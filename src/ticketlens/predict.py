@@ -7,9 +7,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 import joblib
 import numpy as np
-import torch
-from peft import PeftModel
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from ticketlens.config import get_device, load_config
 from ticketlens.data import clean_and_redact_text
 
@@ -22,7 +19,8 @@ class TicketPredictor:
 
     def __init__(self, cfg: Optional[Dict[str, Any]] = None, model_type: Optional[str] = None):
         self.cfg = cfg or load_config()
-        self.device = get_device()
+        # Resolved only when a transformer is loaded, so torch is never imported otherwise.
+        self.device: Any = "cpu"
         self.default_model_type = model_type or self.cfg.get("inference", {}).get("default_model", "transformer")
         self.confidence_threshold = float(self.cfg.get("inference", {}).get("confidence_threshold", 0.80))
 
@@ -62,6 +60,11 @@ class TicketPredictor:
         transformer_dir = Path(self.cfg["paths"]["model_dir"]) / "transformer"
         if transformer_dir.exists() and any(transformer_dir.iterdir()):
             try:
+                # Heavy deep-learning stack is imported lazily to keep the baseline-only footprint small.
+                from peft import PeftModel
+                from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+                self.device = get_device()
                 with open(transformer_dir / "labels.json", "r", encoding="utf-8") as f:
                     self.transformer_labels = json.load(f)
 
@@ -79,6 +82,8 @@ class TicketPredictor:
                 self.transformer_model.eval()
                 logger.info("Loaded transformer model from %s onto %s", transformer_dir, self.device)
             except Exception as e:
+                self.transformer_model = None
+                self.transformer_tokenizer = None
                 logger.warning("Could not load transformer model: %s", e)
 
     @property
@@ -158,7 +163,9 @@ class TicketPredictor:
 
     def _predict_transformer(self, cleaned_text: str) -> Dict[str, Any]:
         """Inference with DistilBERT LoRA sequence classifier."""
-        inputs = self.transformer_tokenizer(
+        import torch
+
+        inputs =  self.transformer_tokenizer(
             cleaned_text,
             truncation=True,
             padding=True,
