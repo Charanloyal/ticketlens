@@ -55,6 +55,9 @@ def train_transformer_model(
 
     device = get_device()
     logger.info("Using compute device: %s", device)
+    seed = int(cfg.get("random_seed", 42))
+    torch.manual_seed(seed)
+    np.random.seed(seed)
 
     # 1. Prepare data
     train_df, val_df, test_df, label2id = get_dataset_splits(cfg, mode=mode, use_fixture=use_fixture)
@@ -70,6 +73,8 @@ def train_transformer_model(
     weight_decay = float(t_cfg.get("weight_decay", 0.01))
     epochs = t_cfg.get("epochs_quick", 1) if mode == "quick" else t_cfg.get("epochs_full", 3)
     use_peft = t_cfg.get("use_peft", True)
+    patience = int(t_cfg.get("early_stopping_patience", 0) or 0)
+    model_save_dir = Path(cfg["paths"]["model_dir"]) / "transformer"
 
     logger.info("Loading tokenizer from '%s'...", pretrained_name)
     tokenizer = AutoTokenizer.from_pretrained(pretrained_name)
@@ -115,6 +120,15 @@ def train_transformer_model(
 
     # 3. Optimizer and Scheduler
     optimizer = AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+
+    # Class-balanced loss (same idea as class_weight="balanced" for the TF-IDF and Keras baselines),
+    # so the minority Problem/Change classes are not under-predicted.
+    class_weights = None
+    if t_cfg.get("class_weight") == "balanced":
+        counts = np.bincount(train_df["label"].to_numpy(), minlength=num_labels).astype(np.float64)
+        class_weights = torch.tensor(counts.sum() / (num_labels * np.maximum(counts, 1)), dtype=torch.float32, device=device)
+        logger.info("Class-balanced loss weights: %s", [round(float(w), 3) for w in class_weights])
+    loss_fn = nn.CrossEntropyLoss(weight=class_weights)
     total_steps = len(train_loader) * epochs
     warmup_steps = int(0.1 * total_steps)
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=warmup_steps, num_training_steps=total_steps)
@@ -123,6 +137,8 @@ def train_transformer_model(
     start_time = time.time()
     best_val_macro_f1 = -1.0
     best_epoch = 0
+    best_eval: Dict[str, Any] = {}
+    epochs_without_improvement = 0
     training_history = []
 
     # 4. Training Loop
@@ -136,8 +152,8 @@ def train_transformer_model(
             attention_mask = batch["attention_mask"].to(device)
             labels = batch["labels"].to(device)
 
-            outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
-            loss = outputs.loss
+            outputs = model(input_ids=input_ids, attention_mask=attention_mask)
+            loss = loss_fn(outputs.logits, labels)
             loss.backward()
 
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
@@ -194,6 +210,23 @@ def train_transformer_model(
         if val_macro_f1 > best_val_macro_f1:
             best_val_macro_f1 = val_macro_f1
             best_epoch = epoch
+            epochs_without_improvement = 0
+            best_eval = {
+                "labels": list(all_labels),
+                "preds": list(all_preds),
+                "acc": float(val_acc),
+                "macro_f1": float(val_macro_f1),
+                "weighted_f1": float(val_weighted_f1),
+            }
+            # Keep the best checkpoint (the adapter is only a few MB with LoRA).
+            model_save_dir.mkdir(parents=True, exist_ok=True)
+            model.save_pretrained(model_save_dir)
+            logger.info("New best Val Macro-F1 %.4f at epoch %d - checkpoint saved.", val_macro_f1, epoch)
+        else:
+            epochs_without_improvement += 1
+            if patience and epochs_without_improvement >= patience:
+                logger.info("Early stopping: no improvement for %d epoch(s).", patience)
+                break
 
     training_duration = round(time.time() - start_time, 3)
     logger.info("Training complete in %.2f seconds. Best Val Macro-F1: %.4f (Epoch %d)", training_duration, best_val_macro_f1, best_epoch)
@@ -212,19 +245,22 @@ def train_transformer_model(
     p50_latency_ms = round(float(np.percentile(latency_trials, 50)), 3)
     p95_latency_ms = round(float(np.percentile(latency_trials, 95)), 3)
 
-    # 6. Save model checkpoint and metadata
-    model_save_dir = Path(cfg["paths"]["model_dir"]) / "transformer"
-    model_save_dir.mkdir(parents=True, exist_ok=True)
-
-    logger.info("Saving transformer checkpoint and tokenizer to %s...", model_save_dir)
-    model.save_pretrained(model_save_dir)
+    # 6. Save tokenizer and metadata next to the best checkpoint
+    logger.info("Saving tokenizer and label mapping to %s (best epoch: %d)...", model_save_dir, best_epoch)
     tokenizer.save_pretrained(model_save_dir)
 
     with open(model_save_dir / "labels.json", "w", encoding="utf-8") as f:
         json.dump({"label2id": label2id, "id2label": id2label}, f, indent=2)
 
     target_names = [id2label[i] for i in range(num_labels)]
-    report_dict = classification_report(all_labels, all_preds, target_names=target_names, output_dict=True, zero_division=0)
+    report_dict = classification_report(
+        best_eval["labels"],
+        best_eval["preds"],
+        labels=list(range(num_labels)),
+        target_names=target_names,
+        output_dict=True,
+        zero_division=0,
+    )
 
     metrics = {
         "model_type": "DistilBERT (PEFT / LoRA)" if use_peft else "DistilBERT",
@@ -233,14 +269,19 @@ def train_transformer_model(
         "device": str(device),
         "use_peft": use_peft,
         "epochs": epochs,
+        "epochs_run": len(training_history),
+        "best_epoch": best_epoch,
+        "learning_rate": lr,
+        "lora_r": t_cfg.get("lora_r", 8) if use_peft else None,
+        "max_length": max_length,
         "train_samples": len(train_df),
         "val_samples": len(val_df),
         "test_samples": len(test_df),
         "classes": target_names,
         "training_duration_seconds": training_duration,
-        "validation_accuracy": round(float(val_acc), 4),
-        "validation_macro_f1": round(float(val_macro_f1), 4),
-        "validation_weighted_f1": round(float(val_weighted_f1), 4),
+        "validation_accuracy": round(best_eval["acc"], 4),
+        "validation_macro_f1": round(best_eval["macro_f1"], 4),
+        "validation_weighted_f1": round(best_eval["weighted_f1"], 4),
         "latency_p50_ms": p50_latency_ms,
         "latency_p95_ms": p95_latency_ms,
         "training_history": training_history,

@@ -1,0 +1,117 @@
+# Reproducible benchmark: trains TF-IDF, Keras (TensorFlow) and DistilBERT + LoRA (PyTorch/PEFT) on the same
+# training subset, evaluates them on the identical held-out test set, runs SHAP / bias analysis, and publishes
+# the reports plus the trained LoRA adapter as the "models" GitHub release (used by Dockerfile.transformer).
+name: Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Training subset (full = 7,000 train tickets; quick = 350 for a smoke run)"
+        type: choice
+        options: [full, quick]
+        default: full
+      publish:
+        description: "Publish results as the 'models' release"
+        type: boolean
+        default: true
+  push:
+    branches: [main]
+    paths:
+      - "src/ticketlens/train_*.py"
+      - "src/ticketlens/evaluate.py"
+      - "src/ticketlens/explain.py"
+      - "src/ticketlens/data.py"
+      - "configs/config.yaml"
+      - "requirements.txt"
+      - ".github/workflows/benchmark.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: benchmark
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      PYTHONPATH: src:.
+      TF_CPP_MIN_LOG_LEVEL: "2"
+      MODE: ${{ inputs.mode || 'full' }}
+      PUBLISH: ${{ github.event_name == 'push' || inputs.publish }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11.9"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install full stack (CPU PyTorch, Transformers/PEFT, TensorFlow/Keras, SHAP)
+        run: |
+          pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements.txt
+          python -c "import torch, tensorflow as tf, transformers, peft, shap; print('torch', torch.__version__, '| tf', tf.__version__, '| transformers', transformers.__version__)"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-${{ hashFiles('configs/config.yaml') }}
+          restore-keys: hf-
+
+      - name: Served model (TF-IDF, all data) - same build as Render
+        run: python -m ticketlens.build
+
+      - name: TF-IDF + Logistic Regression (benchmark subset)
+        run: python -m ticketlens.train_baseline --mode "$MODE" --model-name tfidf_benchmark --no-augment
+
+      - name: Keras CNN baseline (TensorFlow)
+        run: python -m ticketlens.train_keras --mode "$MODE"
+
+      - name: DistilBERT + LoRA fine-tuning (PyTorch / PEFT)
+        run: python -m ticketlens.train_transformer --mode "$MODE"
+
+      - name: Evaluate all models on the identical test set (+ error analysis)
+        run: python -m ticketlens.evaluate
+
+      - name: SHAP interpretability + bias audit
+        run: python -m ticketlens.explain
+
+      - name: Hand-written ticket evaluation
+        run: python scripts/evaluate_handwritten.py
+
+      - name: Full test suite (incl. Keras and transformer tests)
+        run: pytest -q -rs
+
+      - name: Benchmark summary
+        run: cat reports/evaluation_summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Package models and reports
+        run: |
+          mkdir -p dist
+          tar -czf dist/transformer-lora.tar.gz -C artifacts/models transformer
+          tar -czf dist/keras-cnn.tar.gz -C artifacts/models keras
+          tar -czf dist/benchmark-reports.tar.gz reports
+          ls -lh dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-${{ github.sha }}
+          path: dist/
+
+      - name: Publish "models" release
+        if: env.PUBLISH == 'true' && env.MODE == 'full'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete models --yes --cleanup-tag || true
+          gh release create models dist/* \
+            --title "Benchmark models & reports (${GITHUB_SHA::7})" \
+            --notes-file reports/evaluation_summary.md \
+            --target "$GITHUB_SHA" \
+            --latest=false

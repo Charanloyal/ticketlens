@@ -1,0 +1,57 @@
+# TicketLens with the fine-tuned DistilBERT + LoRA model served by FastAPI.
+#
+# The LoRA adapter is downloaded from the "models" GitHub release published by the Benchmark
+# workflow (.github/workflows/benchmark.yml), and the DistilBERT base weights are baked into the
+# image so the container runs fully offline. Needs ~1 GB RAM (not suitable for Render's free plan,
+# which serves the TF-IDF image from ./Dockerfile instead).
+#
+#   docker build -f Dockerfile.transformer -t ticketlens:transformer .
+#   docker run -p 8000:8000 ticketlens:transformer
+FROM python:3.11-slim
+
+ARG MODEL_RELEASE_URL=https://github.com/Charanloyal/ticketlens/releases/download/models/transformer-lora.tar.gz
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONPATH=/app/src:/app \
+    TICKETLENS_ENV=production \
+    HF_HOME=/app/.cache/huggingface \
+    PORT=8000
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# CPU-only PyTorch keeps the image ~1.5 GB smaller than the default CUDA wheels.
+COPY requirements-render.txt .
+RUN pip install --upgrade pip \
+    && pip install torch --index-url https://download.pytorch.org/whl/cpu \
+    && pip install -r requirements-render.txt "transformers>=4.40.0,<6.0.0" "peft>=0.10.0,<1.0.0"
+
+COPY configs/ /app/configs/
+COPY data/fixtures/ /app/data/fixtures/
+COPY reports/ /app/reports/
+COPY src/ /app/src/
+COPY main.py ./
+
+# TF-IDF model (fast fallback / comparison) + fine-tuned LoRA adapter + DistilBERT base weights.
+RUN python -m ticketlens.build \
+    && rm -rf /app/data/raw /app/data/processed \
+    && mkdir -p /app/artifacts/models \
+    && curl -fsSL "$MODEL_RELEASE_URL" | tar -xz -C /app/artifacts/models \
+    && python -c "from ticketlens.predict import TicketPredictor; p = TicketPredictor(); assert 'transformer' in p.get_loaded_models(), p.get_loaded_models(); print(p.predict('VPN is down for the whole office'))"
+
+ENV HF_HUB_OFFLINE=1
+
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/health || exit 1
+
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips='*'"]

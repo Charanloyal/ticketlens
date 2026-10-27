@@ -46,6 +46,15 @@ def clean_and_redact_text(text: str, redact_pii: bool = True) -> str:
     return "\n\n".join([line for line in non_empty_lines if line])
 
 
+def _stratified_subsample(df: pd.DataFrame, n: int, seed: int) -> pd.DataFrame:
+    """Stratified random subsample of n rows (returns df unchanged if it is already small enough)."""
+    if n <= 0 or n >= len(df):
+        return df
+    stratify = df["label"] if df["label"].value_counts().min() >= 2 else None
+    sample, _ = train_test_split(df, train_size=n, stratify=stratify, random_state=seed)
+    return sample
+
+
 def validate_schema(df: pd.DataFrame, required_columns: List[str]) -> None:
     """Ensure required columns exist in the DataFrame."""
     missing = [c for c in required_columns if c not in df.columns]
@@ -177,26 +186,15 @@ def preprocess_data(
         df = df.drop_duplicates(subset=["text"]).copy()
         logger.info("Deduplication: removed %d duplicate tickets, %d remaining", initial_count - len(df), len(df))
 
-    # Sample subset if requested or in quick/full mode
     seed = cfg.get("random_seed", 42)
-    if mode == "quick":
-        quick_samples = cfg["dataset"].get("quick_mode_samples", 300)
-        if quick_samples < len(df):
-            logger.info("Quick mode: sampling %d rows (stratified)", quick_samples)
-            df, _ = train_test_split(df, train_size=quick_samples, stratify=df[target_col], random_state=seed)
-    elif mode == "full":
-        full_samples = cfg["dataset"].get("full_mode_samples", None)
-        if full_samples and full_samples < len(df):
-            logger.info("Full mode: sampling %d rows (stratified) for CPU efficiency", full_samples)
-            df, _ = train_test_split(df, train_size=full_samples, stratify=df[target_col], random_state=seed)
-    # mode == "all": use every cleaned, deduplicated row (cheap for the TF-IDF baseline).
 
     # Deterministic label mapping
     unique_labels = sorted(df[target_col].unique().tolist())
     label2id = {lbl: idx for idx, lbl in enumerate(unique_labels)}
     df["label"] = df[target_col].map(label2id)
 
-    # Train / Val / Test split (70 / 15 / 15)
+    # Train / Val / Test split (70 / 15 / 15) on the FULL cleaned dataset, so the held-out test set is
+    # identical for every mode and every model (TF-IDF, Keras, DistilBERT are benchmarked on the same tickets).
     train_ratio = cfg["dataset"].get("train_ratio", 0.70)
     val_ratio = cfg["dataset"].get("val_ratio", 0.15)
     test_ratio = cfg["dataset"].get("test_ratio", 0.15)
@@ -220,6 +218,17 @@ def preprocess_data(
         stratify=temp_stratify,
         random_state=seed,
     )
+
+    # quick/full modes subsample only the training and validation splits (CPU budget for the transformer).
+    # mode == "all" keeps every cleaned, deduplicated row.
+    budget = {
+        "quick": cfg["dataset"].get("quick_mode_samples", 300),
+        "full": cfg["dataset"].get("full_mode_samples", None),
+    }.get(mode)
+    if budget:
+        train_df = _stratified_subsample(train_df, int(round(budget * train_ratio)), seed)
+        val_df = _stratified_subsample(val_df, int(round(budget * val_ratio)), seed)
+        logger.info("%s mode: subsampled train/val to %d/%d tickets (test set unchanged)", mode.capitalize(), len(train_df), len(val_df))
 
     logger.info(
         "Split sizes: Train=%d, Val=%d, Test=%d (Total=%d across %d classes)",

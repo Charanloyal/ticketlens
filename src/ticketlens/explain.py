@@ -68,7 +68,7 @@ def run_shap_analysis(vectorizer, classifier, sample_texts: List[str], id2label:
     return shap_summary
 
 
-def audit_dataset_bias(df: pd.DataFrame, target_col: str = "type") -> Dict[str, Any]:
+def audit_dataset_bias(df: pd.DataFrame, target_col: str = "type", raw_texts: Optional[List[str]] = None) -> Dict[str, Any]:
     """Audit dataset label distribution, class imbalance, text lengths, and PII exposure."""
     total_count = len(df)
     class_counts = df[target_col].value_counts().to_dict()
@@ -88,8 +88,9 @@ def audit_dataset_bias(df: pd.DataFrame, target_col: str = "type") -> Dict[str, 
             "max_words": int(np.max(lengths)),
         }
 
-    # PII presence scan in raw text
-    sample_text = " ".join(df["text"].dropna().sample(min(500, len(df)), random_state=42).tolist())
+    # PII presence scan on the raw (pre-redaction) text; the cleaned "text" column is already redacted.
+    pool = pd.Series(raw_texts if raw_texts is not None else df["text"].tolist()).dropna()
+    sample_text = " ".join(pool.sample(min(500, len(pool)), random_state=42).tolist())
     email_hits = len(EMAIL_REGEX.findall(sample_text))
     phone_hits = len(PHONE_REGEX.findall(sample_text))
     ip_hits = len(IP_REGEX.findall(sample_text))
@@ -100,7 +101,7 @@ def audit_dataset_bias(df: pd.DataFrame, target_col: str = "type") -> Dict[str, 
         "class_imbalance_ratio": imbalance_ratio,
         "text_length_by_class": lengths_by_class,
         "pii_risk_audit": {
-            "raw_sample_size": min(500, len(df)),
+            "raw_sample_size": int(min(500, len(pool))),
             "emails_detected_pre_sanitization": email_hits,
             "phone_numbers_detected_pre_sanitization": phone_hits,
             "ip_addresses_detected_pre_sanitization": ip_hits,
@@ -182,12 +183,21 @@ def run_explainability_pipeline(cfg: Optional[Dict[str, Any]] = None, use_fixtur
     reports_dir = Path(cfg["paths"]["reports_dir"])
     reports_dir.mkdir(parents=True, exist_ok=True)
 
-    # 1. Dataset audit
-    raw_df = load_raw_dataset(cfg, use_fixture=use_fixture)
-    train_df, _, test_df, label2id = get_dataset_splits(cfg, mode="quick", use_fixture=use_fixture)
-    id2label = {v: k for k, v in label2id.items()}
+    # 1. Dataset audit on the full cleaned dataset (temporary processed dir: no side effects on data/processed)
+    import copy
+    import tempfile
 
-    bias_audit = audit_dataset_bias(train_df, target_col="label")
+    raw_df = load_raw_dataset(cfg, use_fixture=use_fixture)
+    text_cols = [c for c in cfg["dataset"]["text_columns"] if c in raw_df.columns]
+    raw_texts = raw_df[text_cols].fillna("").astype(str).agg(" ".join, axis=1).tolist()
+    tmp_cfg = copy.deepcopy(cfg)
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_cfg["paths"]["processed_data_dir"] = tmp
+        train_df, val_df, test_df, label2id = get_dataset_splits(tmp_cfg, mode="all", use_fixture=use_fixture)
+    id2label = {v: k for k, v in label2id.items()}
+    full_df = pd.concat([train_df, val_df, test_df], ignore_index=True)
+
+    bias_audit = audit_dataset_bias(full_df, target_col="label", raw_texts=raw_texts)
     bias_audit["class_distribution"] = {id2label[k]: v for k, v in bias_audit["class_distribution"].items()}
     bias_audit["text_length_by_class"] = {id2label[k]: v for k, v in bias_audit["text_length_by_class"].items()}
 

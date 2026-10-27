@@ -35,6 +35,8 @@ def train_baseline_model(
     use_fixture: bool = False,
     require_dataset: bool = False,
     from_corpus: bool = False,
+    model_name: str = "baseline",
+    augment: Optional[bool] = None,
 ) -> Dict[str, Any]:
     """Train TF-IDF + Logistic Regression baseline pipeline and save artifacts.
 
@@ -43,6 +45,8 @@ def train_baseline_model(
     """
     if cfg is None:
         cfg = load_config()
+    if augment is not None:
+        cfg = {**cfg, "baseline": {**cfg["baseline"], "augment_short_text": augment}}
 
     if from_corpus:
         logger.info("Loading pre-built training corpus (mode=%s)...", mode)
@@ -133,7 +137,7 @@ def train_baseline_model(
     }
 
     # Save artifacts
-    model_dir = Path(cfg["paths"]["model_dir"]) / "baseline"
+    model_dir = Path(cfg["paths"]["model_dir"]) / model_name
     model_dir.mkdir(parents=True, exist_ok=True)
     # `stop_words_` only lists pruned terms (introspection only); dropping it shrinks the artifact.
     vectorizer.stop_words_ = None
@@ -144,7 +148,7 @@ def train_baseline_model(
 
     reports_dir = Path(cfg["paths"]["reports_dir"])
     reports_dir.mkdir(parents=True, exist_ok=True)
-    with open(reports_dir / "metrics_baseline.json", "w", encoding="utf-8") as f:
+    with open(reports_dir / f"metrics_{model_name}.json", "w", encoding="utf-8") as f:
         json.dump(metrics, f, indent=2)
 
     logger.info("Baseline validation: Macro-F1=%.4f, Acc=%.4f, P50 Latency=%.2f ms", val_macro_f1, val_acc, p50_latency_ms)
@@ -162,6 +166,12 @@ if __name__ == "__main__":
         help="Fail instead of falling back to the synthetic fixture when the real dataset can't be loaded (production builds)",
     )
     parser.add_argument(
+        "--model-name",
+        default="baseline",
+        help="Artifact sub-directory under artifacts/models ('baseline' is the served model; e.g. 'tfidf_benchmark' for benchmarking)",
+    )
+    parser.add_argument("--no-augment", action="store_true", help="Disable short-text augmentation (plain TF-IDF benchmark)")
+    parser.add_argument(
         "--from-corpus",
         action="store_true",
         help="Train from the corpus written by 'python -m ticketlens.data --prepare-corpus' (low-memory production build)",
@@ -173,4 +183,6 @@ if __name__ == "__main__":
         use_fixture=args.fixture,
         require_dataset=args.require_dataset,
         from_corpus=args.from_corpus,
+        model_name=args.model_name,
+        augment=False if args.no_augment else None,
     )

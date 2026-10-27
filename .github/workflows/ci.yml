@@ -94,3 +94,38 @@ jobs:
       - name: Container log
         if: always()
         run: docker logs tl || true
+
+  docker-transformer:
+    name: Docker (DistilBERT + LoRA) build + predict
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      MODEL_URL: https://github.com/${{ github.repository }}/releases/download/models/transformer-lora.tar.gz
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check that the "models" release exists
+        id: release
+        run: |
+          if curl -sfIL "$MODEL_URL" > /dev/null; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No 'models' release yet - run the Benchmark workflow to publish the LoRA adapter."
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Build image
+        if: steps.release.outputs.available == 'true'
+        run: docker build -f Dockerfile.transformer --build-arg MODEL_RELEASE_URL="$MODEL_URL" -t ticketlens:transformer .
+      - name: Run container and check the fine-tuned model is served
+        if: steps.release.outputs.available == 'true'
+        run: |
+          docker run -d --name tlt -p 8000:8000 ticketlens:transformer
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:8000/health && break; sleep 2; done
+          echo
+          curl -sf http://127.0.0.1:8000/health | tee /dev/stderr | grep -q '"transformer"'
+          curl -sf -X POST http://127.0.0.1:8000/predict -H "Content-Type: application/json" \
+            -d '{"text":"VPN is down for the whole office since this morning"}' | tee /dev/stderr \
+            | grep -q '"model_type":"DistilBERT (PEFT / LoRA)"'
+          echo "::notice::Container memory: $(docker stats --no-stream --format '{{.MemUsage}}' tlt)"
+      - name: Container log
+        if: always() && steps.release.outputs.available == 'true'
+        run: docker logs tlt || true

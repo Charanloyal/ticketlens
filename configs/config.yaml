@@ -16,8 +16,10 @@ dataset:
   test_ratio: 0.15
   deduplicate: true
   redact_pii: true
+  # quick/full modes subsample only the train/val splits (70/15 of the budget); the test split is
+  # always the full held-out 15%, so every model is benchmarked on the same tickets.
   quick_mode_samples: 500
-  full_mode_samples: 3000
+  full_mode_samples: 10000
 
 baseline:
   model_name: "tfidf_logistic_regression"
@@ -37,7 +39,8 @@ transformer:
   max_length: 128
   batch_size: 16
   eval_batch_size: 32
-  learning_rate: 5.0e-5
+  # LoRA adapters need a higher learning rate than full fine-tuning (5e-5 barely moved the adapter).
+  learning_rate: 3.0e-4
   weight_decay: 0.01
   epochs_quick: 2
   epochs_full: 3
@@ -50,6 +53,20 @@ transformer:
     - "q_lin"
     - "v_lin"
   device: "auto"
+
+keras:
+  # TensorFlow / Keras CNN baseline (see src/ticketlens/train_keras.py)
+  max_tokens: 30000
+  sequence_length: 256
+  embedding_dim: 128
+  conv_filters: 128
+  kernel_size: 5
+  dense_units: 64
+  dropout: 0.3
+  learning_rate: 1.0e-3
+  batch_size: 64
+  epochs: 10
+  early_stopping_patience: 2
 
 inference:
   confidence_threshold: 0.80 # >= 0.80: "Auto Accept", < 0.80: "Needs Review"
