@@ -9,10 +9,22 @@
 [![Benchmark](https://github.com/Charanloyal/ticketlens/actions/workflows/benchmark.yml/badge.svg)](https://github.com/Charanloyal/ticketlens/actions/workflows/benchmark.yml)
 [![CI](https://github.com/Charanloyal/ticketlens/actions/workflows/ci.yml/badge.svg)](https://github.com/Charanloyal/ticketlens/actions/workflows/ci.yml)
 [![Tests: Pytest](https://img.shields.io/badge/Tests-66-brightgreen.svg)](https://docs.pytest.org/)
+[![Live demo](https://img.shields.io/badge/Live%20demo-ticketlens.onrender.com-46E3B7.svg?logo=render)](https://ticketlens.onrender.com/)
+
+**▶ Live demo: [ticketlens.onrender.com](https://ticketlens.onrender.com/)** · [Swagger API](https://ticketlens.onrender.com/docs) — hosted on Render's free plan, so the first visit after ~15 idle minutes takes 1–2 minutes to wake up.
 
 **TicketLens** is an end-to-end IT service desk ticket classification and triage engine with an ultra-sleek, dark-mode glassmorphic web dashboard. It classifies IT issues into standard ITIL categories (**Incident**, **Request**, **Problem**, **Change**) by fine-tuning a pre-trained **DistilBERT** with **LoRA (Hugging Face Transformers + PEFT, PyTorch)** and benchmarking it on **macro-F1** against a **TF-IDF + Logistic Regression** baseline and a **Keras (TensorFlow) CNN** baseline, all scored on the identical held-out test set.
 
 The platform includes precision/recall **error analysis**, **SHAP** interpretability, a **bias check** (class balance, performance parity by ticket length, PII audit), PII scrubbing, latency benchmarking, and a **FastAPI** service with confidence-gated routing, packaged in **Docker** (a DistilBERT + LoRA image and a lightweight TF-IDF image that runs on Render's free plan).
+
+**Why it matters.** People who raise IT tickets write free text; each ITIL category goes to a different team with a
+different deadline (Incident → on-call support within hours, Request → fulfilment, Problem → root-cause engineers,
+Change → Change Advisory Board). TicketLens automates that first triage step: it classifies the ticket, auto-routes it
+when confident, and sends uncertain or non-English tickets to a human with its suggestion attached.
+
+| Live triage (PII redacted, routed to the on-call queue) | Benchmark report card (same 3,563 test tickets) |
+| :---: | :---: |
+| ![TicketLens live triage](docs/dashboard.png) | ![TicketLens benchmark tab](docs/benchmarks.png) |
 
 ---
 
@@ -539,7 +551,7 @@ If you configure the Web Service manually via Render UI:
    - `TICKETLENS_CONFIDENCE_THRESHOLD`: `0.80`
    - `TICKETLENS_API_KEY`: *(optional)* any secret value to require an `X-API-Key` header on `/predict`
 5. Set **Health Check Path** under *Advanced*: `/health`.
-6. Click **Create Web Service**. Your live public application URL will be provisioned at `https://ticketlens-xxxx.onrender.com`.
+6. Click **Create Web Service**. Your live public application URL will be provisioned at `https://<service-name>.onrender.com` (this project runs at [ticketlens.onrender.com](https://ticketlens.onrender.com/)).
 
 ---
 
