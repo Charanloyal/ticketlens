@@ -51,6 +51,11 @@ def validate_schema(df: pd.DataFrame, required_columns: List[str]) -> None:
         raise ValueError(f"Dataset missing required columns: {missing}. Present: {list(df.columns)}")
 
 
+def _required_columns(cfg: Dict[str, Any]) -> List[str]:
+    """Columns needed for training; loading only these keeps memory low (e.g. on Render build machines)."""
+    return [cfg["dataset"]["target_column"], *cfg["dataset"]["text_columns"], "language"]
+
+
 def load_raw_dataset(cfg: Dict[str, Any], use_fixture: bool = False) -> pd.DataFrame:
     """
     Load dataset from Hugging Face or local parquet cache.
@@ -61,6 +66,7 @@ def load_raw_dataset(cfg: Dict[str, Any], use_fixture: bool = False) -> pd.DataF
     raw_dir.mkdir(parents=True, exist_ok=True)
     local_cache_file = raw_dir / "customer_support_tickets_en.parquet"
     fixtures_file = Path(cfg["paths"]["fixtures_file"])
+    required = _required_columns(cfg)
 
     if use_fixture:
         logger.info("Explicitly using synthetic test fixture: %s", fixtures_file)
@@ -73,7 +79,10 @@ def load_raw_dataset(cfg: Dict[str, Any], use_fixture: bool = False) -> pd.DataF
     # 1. Check local cache
     if local_cache_file.exists():
         logger.info("Loading cached raw dataset from %s", local_cache_file)
-        return pd.read_parquet(local_cache_file)
+        import pyarrow.parquet as pq
+
+        available = set(pq.read_schema(local_cache_file).names)
+        return pd.read_parquet(local_cache_file, columns=[c for c in required if c in available])
 
     # 2. Try loading from Hugging Face
     dataset_name = cfg["dataset"]["name"]
@@ -81,7 +90,9 @@ def load_raw_dataset(cfg: Dict[str, Any], use_fixture: bool = False) -> pd.DataF
     try:
         from datasets import load_dataset
         ds = load_dataset(dataset_name, split="train")
+        ds = ds.select_columns([c for c in required if c in ds.column_names])
         df = ds.to_pandas()
+        del ds
 
         # Filter by language if specified
         target_lang = cfg["dataset"].get("language", "en")
@@ -114,8 +125,10 @@ def preprocess_data(
     text_cols = cfg["dataset"]["text_columns"]
     validate_schema(df, [target_col] + text_cols)
 
-    # Filter nulls in target or text
-    df = df.dropna(subset=[target_col] + text_cols).copy()
+    # Filter nulls in target; a ticket only needs at least one non-empty text field
+    # (many short Request tickets have no subject and were previously dropped).
+    df = df.dropna(subset=[target_col]).copy()
+    df = df[df[text_cols].notna().any(axis=1)].copy()
 
     # Drop unsupported / rare classes if necessary (we focus on standard IT ticket categories)
     # Target column 'type' standard categories: Incident, Request, Problem, Change
@@ -152,6 +165,7 @@ def preprocess_data(
         if full_samples and full_samples < len(df):
             logger.info("Full mode: sampling %d rows (stratified) for CPU efficiency", full_samples)
             df, _ = train_test_split(df, train_size=full_samples, stratify=df[target_col], random_state=seed)
+    # mode == "all": use every cleaned, deduplicated row (cheap for the TF-IDF baseline).
 
     # Deterministic label mapping
     unique_labels = sorted(df[target_col].unique().tolist())
@@ -216,7 +230,7 @@ def get_dataset_splits(cfg: Optional[Dict[str, Any]] = None, mode: str = "quick"
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Prepare dataset for TicketLens")
-    parser.add_argument("--mode", choices=["quick", "full"], default="quick", help="Execution mode")
+    parser.add_argument("--mode", choices=["quick", "full", "all"], default="quick", help="Execution mode")
     parser.add_argument("--fixture", action="store_true", help="Force synthetic fixture usage")
     args = parser.parse_args()
 

@@ -1,4 +1,6 @@
 import logging
+import os
+import secrets
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -12,9 +14,10 @@ _PROJECT_ROOT = _SRC_DIR.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import Depends, FastAPI, HTTPException, Request, Security, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.security import APIKeyHeader
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 from ticketlens.config import get_project_root, load_config
@@ -25,6 +28,26 @@ logger = logging.getLogger("ticketlens.api")
 
 # Global predictor instance loaded once at startup
 predictor: Optional[TicketPredictor] = None
+
+API_KEY_ENV = "TICKETLENS_API_KEY"
+_api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False, description=f"Required only when {API_KEY_ENV} is set on the server.")
+
+
+def _configured_api_key() -> str:
+    return os.environ.get(API_KEY_ENV, "").strip()
+
+
+def require_api_key(api_key: Optional[str] = Security(_api_key_header)) -> None:
+    """Enforce the X-API-Key header when TICKETLENS_API_KEY is configured; open demo mode otherwise."""
+    expected = _configured_api_key()
+    if not expected:
+        return
+    if not api_key or not secrets.compare_digest(api_key.encode("utf-8"), expected.encode("utf-8")):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid API key. Provide it in the X-API-Key header.",
+            headers={"WWW-Authenticate": "ApiKey"},
+        )
 
 
 @asynccontextmanager
@@ -92,6 +115,14 @@ class PredictResponse(BaseModel):
     model_type: str
     model_version: str
     confidence_threshold: float
+    itil_cues: Dict[str, List[str]] = Field(
+        default_factory=dict,
+        description="ITIL keyword cues that adjusted the model probabilities, grouped by category.",
+    )
+    warnings: List[str] = Field(
+        default_factory=list,
+        description="Input quality warnings (e.g. non-English text). Any warning forces 'Needs Review'.",
+    )
 
 
 class HealthResponse(BaseModel):
@@ -109,6 +140,7 @@ class MetadataResponse(BaseModel):
     models_available: List[str]
     default_model: str
     confidence_threshold: float
+    auth_required: bool
 
 
 @app.get("/", response_class=HTMLResponse, tags=["General"])
@@ -165,10 +197,11 @@ async def get_metadata():
         models_available=loaded,
         default_model=default_model,
         confidence_threshold=float(cfg.get("inference", {}).get("confidence_threshold", 0.80)),
+        auth_required=bool(_configured_api_key()),
     )
 
 
-@app.post("/predict", response_model=PredictResponse, tags=["Inference"])
+@app.post("/predict", response_model=PredictResponse, tags=["Inference"], dependencies=[Depends(require_api_key)])
 async def predict_ticket(request: PredictRequest):
     """
     Classify an incoming IT support ticket.

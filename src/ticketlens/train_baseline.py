@@ -3,9 +3,10 @@
 import argparse
 import json
 import logging
+import re
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 import joblib
 import numpy as np
 import pandas as pd
@@ -13,10 +14,50 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report, f1_score
 from ticketlens.config import load_config
-from ticketlens.data import get_dataset_splits
+from ticketlens.data import clean_and_redact_text, get_dataset_splits
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("ticketlens.train_baseline")
+
+_SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
+_HTML_BREAK = re.compile(r"<br\s*/?>", re.IGNORECASE)
+
+
+def build_vectorizer(b_cfg: Dict[str, Any]) -> TfidfVectorizer:
+    """Word n-gram TF-IDF (float32 keeps peak training memory low enough for 512 MB build machines)."""
+    return TfidfVectorizer(
+        ngram_range=tuple(b_cfg["ngram_range"]),
+        max_features=b_cfg["max_features"],
+        min_df=b_cfg.get("min_df", 2),
+        sublinear_tf=b_cfg.get("sublinear_tf", True),
+        dtype=np.float32,
+    )
+
+
+def short_text_variants(train_df: pd.DataFrame, cfg: Dict[str, Any]) -> Tuple[List[str], List[int]]:
+    """Create subject-only and first-sentence samples so the model also learns from short, hand-written-style tickets.
+
+    Only derived from the training split, so validation/test data never leaks into training.
+    """
+    text_cols = cfg["dataset"]["text_columns"]
+    redact = cfg["dataset"].get("redact_pii", True)
+    texts: List[str] = []
+    labels: List[int] = []
+    subject_col, body_col = (text_cols + [None, None])[:2]
+
+    for _, row in train_df.iterrows():
+        candidates = []
+        if subject_col and isinstance(row.get(subject_col), str):
+            candidates.append(row[subject_col])
+        if body_col and isinstance(row.get(body_col), str):
+            body = _HTML_BREAK.sub(" ", row[body_col])
+            candidates.append(_SENTENCE_SPLIT.split(body.strip(), maxsplit=1)[0])
+        for candidate in candidates:
+            cleaned = clean_and_redact_text(candidate, redact_pii=redact)
+            if len(cleaned) > 8:
+                texts.append(cleaned)
+                labels.append(int(row["label"]))
+    return texts, labels
 
 
 def train_baseline_model(
@@ -34,23 +75,25 @@ def train_baseline_model(
 
     b_cfg = cfg["baseline"]
     logger.info(
-        "Configuring TF-IDF (ngram_range=%s, max_features=%d, sublinear_tf=%s)...",
+        "Configuring TF-IDF (ngram_range=%s, max_features=%s, sublinear_tf=%s)...",
         b_cfg["ngram_range"],
         b_cfg["max_features"],
         b_cfg["sublinear_tf"],
     )
 
-    vectorizer = TfidfVectorizer(
-        ngram_range=tuple(b_cfg["ngram_range"]),
-        max_features=b_cfg["max_features"],
-        min_df=b_cfg.get("min_df", 2),
-        sublinear_tf=b_cfg.get("sublinear_tf", True),
-    )
+    vectorizer = build_vectorizer(b_cfg)
 
     # Fit vectorizer strictly on training set
     start_time = time.time()
-    X_train = vectorizer.fit_transform(train_df["text"])
-    y_train = train_df["label"].values
+    train_texts = train_df["text"].tolist()
+    train_labels = train_df["label"].astype(int).tolist()
+    if b_cfg.get("augment_short_text", False):
+        extra_texts, extra_labels = short_text_variants(train_df, cfg)
+        logger.info("Short-text augmentation: added %d subject/first-sentence samples.", len(extra_texts))
+        train_texts += extra_texts
+        train_labels += extra_labels
+    X_train = vectorizer.fit_transform(train_texts)
+    y_train = np.array(train_labels)
 
     classifier = LogisticRegression(
         C=b_cfg.get("c_param", 1.0),
@@ -59,7 +102,7 @@ def train_baseline_model(
         random_state=cfg.get("random_seed", 42),
     )
 
-    logger.info("Fitting Logistic Regression classifier on %d training samples...", len(train_df))
+    logger.info("Fitting Logistic Regression classifier on %d training samples...", X_train.shape[0])
     classifier.fit(X_train, y_train)
     training_duration_seconds = round(time.time() - start_time, 4)
     logger.info("Baseline training completed in %.3f seconds.", training_duration_seconds)
@@ -108,8 +151,10 @@ def train_baseline_model(
     # Save artifacts
     model_dir = Path(cfg["paths"]["model_dir"]) / "baseline"
     model_dir.mkdir(parents=True, exist_ok=True)
-    joblib.dump(vectorizer, model_dir / "tfidf_vectorizer.joblib")
-    joblib.dump(classifier, model_dir / "logistic_regression.joblib")
+    # `stop_words_` only lists pruned terms (introspection only); dropping it shrinks the artifact.
+    vectorizer.stop_words_ = None
+    joblib.dump(vectorizer, model_dir / "tfidf_vectorizer.joblib", compress=3)
+    joblib.dump(classifier, model_dir / "logistic_regression.joblib", compress=3)
     with open(model_dir / "labels.json", "w", encoding="utf-8") as f:
         json.dump({"label2id": label2id, "id2label": id2label}, f, indent=2)
 
@@ -125,7 +170,7 @@ def train_baseline_model(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train baseline model")
-    parser.add_argument("--mode", choices=["quick", "full"], default="quick", help="Execution mode")
+    parser.add_argument("--mode", choices=["quick", "full", "all"], default="quick", help="Execution mode ('all' trains on every row)")
     parser.add_argument("--fixture", action="store_true", help="Force synthetic fixture usage")
     args = parser.parse_args()
 

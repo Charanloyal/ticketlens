@@ -6,9 +6,10 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 import joblib
-import numpy as np
 from ticketlens.config import get_device, load_config
 from ticketlens.data import clean_and_redact_text
+from ticketlens.itil_rules import CUE_WEIGHT, apply_itil_cues
+from ticketlens.language import detect_non_english
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("ticketlens.predict")
@@ -23,6 +24,7 @@ class TicketPredictor:
         self.device: Any = "cpu"
         self.default_model_type = model_type or self.cfg.get("inference", {}).get("default_model", "transformer")
         self.confidence_threshold = float(self.cfg.get("inference", {}).get("confidence_threshold", 0.80))
+        self.itil_cue_weight = float(self.cfg.get("inference", {}).get("itil_cue_weight", CUE_WEIGHT))
 
         self.baseline_vectorizer = None
         self.baseline_classifier = None
@@ -134,38 +136,53 @@ class TicketPredictor:
         cleaned_text = clean_and_redact_text(text, redact_pii=redact_pii)
 
         if selected_model == "baseline":
-            return self._predict_baseline(cleaned_text)
+            raw_probs = self._baseline_probabilities(cleaned_text)
+            model_name = "TF-IDF + Logistic Regression"
         else:
-            return self._predict_transformer(cleaned_text)
+            raw_probs = self._transformer_probabilities(cleaned_text)
+            model_name = "DistilBERT (PEFT / LoRA)"
 
-    def _predict_baseline(self, cleaned_text: str) -> Dict[str, Any]:
-        """Inference with TF-IDF + Logistic Regression."""
-        vec = self.baseline_vectorizer.transform([cleaned_text])
-        probs = self.baseline_classifier.predict_proba(vec)[0]
-        pred_idx = int(np.argmax(probs))
+        return self._build_result(cleaned_text, raw_probs, model_name)
 
-        id2label = {int(k): v for k, v in self.baseline_labels["id2label"].items()}
-        predicted_category = id2label[pred_idx]
-        confidence = float(probs[pred_idx])
+    def _build_result(self, cleaned_text: str, raw_probs: Dict[str, float], model_name: str) -> Dict[str, Any]:
+        """Apply ITIL cue correction and language checks, then derive the routing decision."""
+        probs, matched_cues = apply_itil_cues(raw_probs, cleaned_text, weight=self.itil_cue_weight)
+        predicted_category = max(probs, key=probs.get)
+        confidence = float(probs[predicted_category])
 
-        probabilities = {id2label[i]: round(float(probs[i]), 4) for i in range(len(probs))}
-        decision = "Auto Accept" if confidence >= self.confidence_threshold else "Needs Review"
+        warnings: List[str] = []
+        language_warning = detect_non_english(cleaned_text)
+        if language_warning:
+            warnings.append(language_warning)
+
+        # Non-English tickets are outside the training distribution, so never auto-route them.
+        auto = confidence >= self.confidence_threshold and not language_warning
+        decision = "Auto Accept" if auto else "Needs Review"
 
         return {
             "predicted_category": predicted_category,
             "confidence": round(confidence, 4),
             "decision": decision,
-            "probabilities": probabilities,
-            "model_type": "TF-IDF + Logistic Regression",
+            "probabilities": {label: round(float(p), 4) for label, p in probs.items()},
+            "model_type": model_name,
             "model_version": self.cfg.get("version", "0.1.0"),
             "confidence_threshold": self.confidence_threshold,
+            "itil_cues": matched_cues,
+            "warnings": warnings,
         }
 
-    def _predict_transformer(self, cleaned_text: str) -> Dict[str, Any]:
-        """Inference with DistilBERT LoRA sequence classifier."""
+    def _baseline_probabilities(self, cleaned_text: str) -> Dict[str, float]:
+        """Class probabilities from TF-IDF + Logistic Regression."""
+        vec = self.baseline_vectorizer.transform([cleaned_text])
+        probs = self.baseline_classifier.predict_proba(vec)[0]
+        id2label = {int(k): v for k, v in self.baseline_labels["id2label"].items()}
+        return {id2label[int(cls)]: float(p) for cls, p in zip(self.baseline_classifier.classes_, probs)}
+
+    def _transformer_probabilities(self, cleaned_text: str) -> Dict[str, float]:
+        """Class probabilities from the DistilBERT LoRA sequence classifier."""
         import torch
 
-        inputs =  self.transformer_tokenizer(
+        inputs = self.transformer_tokenizer(
             cleaned_text,
             truncation=True,
             padding=True,
@@ -174,27 +191,11 @@ class TicketPredictor:
         ).to(self.device)
 
         with torch.no_grad():
-            outputs = self.transformer_model(**inputs)
-            logits = outputs.logits
+            logits = self.transformer_model(**inputs).logits
             probs = torch.softmax(logits, dim=-1)[0].cpu().numpy()
 
-        pred_idx = int(np.argmax(probs))
         id2label = {int(k): v for k, v in self.transformer_labels["id2label"].items()}
-        predicted_category = id2label[pred_idx]
-        confidence = float(probs[pred_idx])
-
-        probabilities = {id2label[i]: round(float(probs[i]), 4) for i in range(len(probs))}
-        decision = "Auto Accept" if confidence >= self.confidence_threshold else "Needs Review"
-
-        return {
-            "predicted_category": predicted_category,
-            "confidence": round(confidence, 4),
-            "decision": decision,
-            "probabilities": probabilities,
-            "model_type": "DistilBERT (PEFT / LoRA)",
-            "model_version": self.cfg.get("version", "0.1.0"),
-            "confidence_threshold": self.confidence_threshold,
-        }
+        return {id2label[i]: float(probs[i]) for i in range(len(probs))}
 
 
 def main():

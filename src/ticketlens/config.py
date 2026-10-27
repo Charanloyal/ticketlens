@@ -55,4 +55,15 @@ def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
                 if not p.is_absolute():
                     cfg["paths"][k] = str(root / p)
 
+    # Environment overrides (e.g. set in render.yaml / Render dashboard)
+    threshold = os.environ.get("TICKETLENS_CONFIDENCE_THRESHOLD", "").strip()
+    if threshold:
+        try:
+            value = float(threshold)
+        except ValueError:
+            raise ValueError(f"TICKETLENS_CONFIDENCE_THRESHOLD must be a number, got {threshold!r}") from None
+        if not 0.0 <= value <= 1.0:
+            raise ValueError(f"TICKETLENS_CONFIDENCE_THRESHOLD must be between 0 and 1, got {value}")
+        cfg.setdefault("inference", {})["confidence_threshold"] = value
+
     return cfg

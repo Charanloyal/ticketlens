@@ -86,4 +86,45 @@ def test_predict_success_baseline(test_client: TestClient):
     assert data["model_type"] == "TF-IDF + Logistic Regression"
     assert "predicted_category" in data
     assert data["decision"] in ["Auto Accept", "Needs Review"]
+    assert isinstance(data["itil_cues"], dict)
+    assert data["warnings"] == []
+
+
+def test_predict_handwritten_invoice_is_request(test_client: TestClient):
+    response = test_client.post("/predict", json={"text": "send me last month's invoice", "model_type": "baseline"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["predicted_category"] == "Request"
+    assert "Request" in data["itil_cues"]
+
+
+def test_predict_non_english_forces_review(test_client: TestClient):
+    response = test_client.post(
+        "/predict",
+        json={"text": "Der Drucker im Büro funktioniert nicht und ich kann nicht drucken"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["decision"] == "Needs Review"
+    assert any("German" in w for w in data["warnings"])
+
+
+def test_api_key_not_required_by_default(monkeypatch, test_client: TestClient):
+    monkeypatch.delenv("TICKETLENS_API_KEY", raising=False)
+    assert test_client.get("/metadata").json()["auth_required"] is False
+    response = test_client.post("/predict", json={"text": "VPN connection broken since morning"})
+    assert response.status_code == 200
+
+
+def test_api_key_enforced_when_configured(monkeypatch, test_client: TestClient):
+    monkeypatch.setenv("TICKETLENS_API_KEY", "s3cret-key")
+    body = {"text": "VPN connection broken since morning"}
+
+    assert test_client.post("/predict", json=body).status_code == 401
+    assert test_client.post("/predict", json=body, headers={"X-API-Key": "wrong"}).status_code == 401
+    assert test_client.post("/predict", json=body, headers={"X-API-Key": "s3cret-key"}).status_code == 200
+
+    # Health checks and metadata stay public so Render's health check keeps working.
+    assert test_client.get("/health").status_code == 200
+    assert test_client.get("/metadata").json()["auth_required"] is True
 

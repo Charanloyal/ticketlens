@@ -9,9 +9,9 @@ services:
     plan: free
     autoDeploy: true
     # Install only the lightweight serving stack (no torch) and train the TF-IDF
-    # model at build time so the server binds $PORT instantly and stays well
-    # under the 512 MB free-plan memory limit.
-    buildCommand: "pip install --upgrade pip && pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.train_baseline --mode full"
+    # model on the full dataset at build time (~40 s, <450 MB peak), so the server
+    # binds $PORT instantly and runs in ~200 MB, under the 512 MB free-plan limit.
+    buildCommand: "pip install --upgrade pip && pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.train_baseline --mode all"
     startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'"
     healthCheckPath: /health
     envVars:
@@ -23,3 +23,8 @@ services:
         value: src:.
       - key: TICKETLENS_CONFIDENCE_THRESHOLD
         value: "0.80"
+      # Optional: require an X-API-Key header on /predict. Leave unset for a public demo.
+      # To enable, add TICKETLENS_API_KEY as a secret in the Render dashboard
+      # (Environment tab) or uncomment below to have Render generate one.
+      # - key: TICKETLENS_API_KEY
+      #   generateValue: true

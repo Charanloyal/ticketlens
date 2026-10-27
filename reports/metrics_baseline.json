@@ -1,58 +1,58 @@
 {
   "model_type": "TF-IDF + Logistic Regression",
-  "mode": "quick",
-  "train_samples": 350,
-  "val_samples": 75,
-  "test_samples": 75,
+  "mode": "all",
+  "train_samples": 16622,
+  "val_samples": 3562,
+  "test_samples": 3563,
   "classes": [
     "Change",
     "Incident",
     "Problem",
     "Request"
   ],
-  "training_duration_seconds": 0.108,
-  "validation_accuracy": 0.7333,
-  "validation_macro_f1": 0.7101,
-  "validation_weighted_f1": 0.7279,
-  "latency_p50_ms": 0.553,
-  "latency_p95_ms": 0.78,
+  "training_duration_seconds": 6.8545,
+  "validation_accuracy": 0.8554,
+  "validation_macro_f1": 0.8622,
+  "validation_weighted_f1": 0.8554,
+  "latency_p50_ms": 0.334,
+  "latency_p95_ms": 0.482,
   "classification_report": {
     "Change": {
-      "precision": 1.0,
-      "recall": 0.625,
-      "f1-score": 0.7692307692307693,
-      "support": 8.0
+      "precision": 0.9603174603174603,
+      "recall": 0.968,
+      "f1-score": 0.9641434262948207,
+      "support": 375.0
     },
     "Incident": {
-      "precision": 0.7096774193548387,
-      "recall": 0.7333333333333333,
-      "f1-score": 0.7213114754098361,
-      "support": 30.0
+      "precision": 0.8267326732673267,
+      "recall": 0.826148409893993,
+      "f1-score": 0.8264404383174266,
+      "support": 1415.0
     },
     "Problem": {
-      "precision": 0.42857142857142855,
-      "recall": 0.4,
-      "f1-score": 0.41379310344827586,
-      "support": 15.0
+      "precision": 0.668918918918919,
+      "recall": 0.668918918918919,
+      "f1-score": 0.668918918918919,
+      "support": 740.0
     },
     "Request": {
-      "precision": 0.88,
-      "recall": 1.0,
-      "f1-score": 0.9361702127659575,
-      "support": 22.0
+      "precision": 0.9902912621359223,
+      "recall": 0.9883720930232558,
+      "f1-score": 0.9893307468477207,
+      "support": 1032.0
     },
-    "accuracy": 0.7333333333333333,
+    "accuracy": 0.8554183043234138,
     "macro avg": {
-      "precision": 0.7545622119815668,
-      "recall": 0.6895833333333333,
-      "f1-score": 0.7101263902137096,
-      "support": 75.0
+      "precision": 0.8615650786599071,
+      "recall": 0.8628598554590419,
+      "f1-score": 0.8622083825947218,
+      "support": 3562.0
     },
     "weighted avg": {
-      "precision": 0.7343852534562212,
-      "recall": 0.7333333333333333,
-      "f1-score": 0.7279444219828858,
-      "support": 75.0
+      "precision": 0.8553976313353697,
+      "recall": 0.8554183043234138,
+      "f1-score": 0.8554060459928591,
+      "support": 3562.0
     }
   }
 }

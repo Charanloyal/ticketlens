@@ -22,12 +22,15 @@ dataset:
 baseline:
   model_name: "tfidf_logistic_regression"
   ngram_range: [1, 2]
-  max_features: 8000
+  max_features: 80000
   min_df: 2
   sublinear_tf: true
-  c_param: 1.5
-  max_iter: 1000
+  c_param: 4.0
+  max_iter: 2000
   class_weight: "balanced"
+  # Adds subject-only / first-sentence training samples (training split only) so the model
+  # also handles short, hand-written tickets.
+  augment_short_text: true
 
 transformer:
   pretrained_model: "distilbert/distilbert-base-uncased"
@@ -52,6 +55,8 @@ inference:
   confidence_threshold: 0.80 # >= 0.80: "Auto Accept", < 0.80: "Needs Review"
   default_model: "transformer"
   max_input_length: 2000
+  # Strength of the ITIL keyword correction (0 disables it). See src/ticketlens/itil_rules.py.
+  itil_cue_weight: 1.5
 
 paths:
   raw_data_dir: "data/raw"

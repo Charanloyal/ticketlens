@@ -1,0 +1,29 @@
+[
+  {"text": "Could you email me the receipt for our annual subscription?", "label": "Request"},
+  {"text": "I'd like read-only permissions on the sales dashboard", "label": "Request"},
+  {"text": "Where can I download the desktop client?", "label": "Request"},
+  {"text": "Please set up a mailbox for the new intern", "label": "Request"},
+  {"text": "Can you provide details about your data retention policy?", "label": "Request"},
+  {"text": "We need two extra monitors for the design team", "label": "Request"},
+
+  {"text": "Nobody in the office can reach the intranet", "label": "Incident"},
+  {"text": "My keyboard stopped responding after the reboot", "label": "Incident"},
+  {"text": "The checkout API is throwing timeout errors for all users", "label": "Incident"},
+  {"text": "Shared calendar is not loading in Teams", "label": "Incident"},
+  {"text": "Our file server is down and the team cannot open documents", "label": "Incident"},
+  {"text": "Getting an access denied error when opening the HR portal", "label": "Incident"},
+
+  {"text": "Disk space alerts on the build server happen again every few days, why?", "label": "Problem"},
+  {"text": "This is the fourth time the payroll export has failed this month", "label": "Problem"},
+  {"text": "We need a permanent fix for the recurring SSO session drops", "label": "Problem"},
+  {"text": "Several customers keep seeing wrong totals on their invoices", "label": "Problem"},
+  {"text": "Investigate why the nightly ETL job intermittently stalls", "label": "Problem"},
+  {"text": "Frequent outages of the guest wifi need a root cause analysis", "label": "Problem"},
+
+  {"text": "Please move our CRM to the new cloud region", "label": "Change"},
+  {"text": "Upgrade all office laptops to Windows 11", "label": "Change"},
+  {"text": "Reconfigure the load balancer to use round robin", "label": "Change"},
+  {"text": "We plan to decommission the old file server next quarter", "label": "Change"},
+  {"text": "Enable audit logging on the production database", "label": "Change"},
+  {"text": "Deploy the new release of the billing service this weekend", "label": "Change"}
+]

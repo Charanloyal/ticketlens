@@ -636,6 +636,38 @@
     .category-title.Problem { color: #f59e0b; }
     .category-title.Change { color: #a855f7; }
 
+    .input-warnings {
+      display: none;
+      margin: -8px 0 18px;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      color: #fbbf24;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .cue-row {
+      display: none;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      margin: -6px 0 18px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .cue-chip {
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--border-glass);
+      background: rgba(56, 189, 248, 0.08);
+      color: #7dd3fc;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+
     .category-meta {
       font-size: 13px;
       color: var(--text-secondary);
@@ -957,6 +989,12 @@
                 </div>
               </div>
 
+              <!-- Input quality warnings (e.g. non-English text) -->
+              <div id="boxWarnings" class="input-warnings" role="alert"></div>
+
+              <!-- ITIL cues that adjusted the model output -->
+              <div id="rowCues" class="cue-row"></div>
+
               <!-- Probability Stack -->
               <div class="bars-stack">
                 <div class="bar-row">
@@ -1200,7 +1238,7 @@
           </div>
           <div class="telemetry-tile">
             <span>Build Command</span>
-            <strong style="font-size: 12px;">pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.train_baseline --mode full</strong>
+            <strong style="font-size: 12px;">pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.train_baseline --mode all</strong>
           </div>
           <div class="telemetry-tile">
             <span>Start Command</span>
@@ -1217,7 +1255,7 @@
   - type: web
     name: ticketlens
     runtime: python
-    buildCommand: "pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.train_baseline --mode full"
+    buildCommand: "pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.train_baseline --mode all"
     startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'"
     healthCheckPath: /health
     envVars:
@@ -1296,15 +1334,29 @@
       const startMs = performance.now();
 
       try {
-        const response = await fetch('/predict', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: text,
-            model_type: currentModel,
-            redact_pii: redactPii
-          })
+        const payload = JSON.stringify({
+          text: text,
+          model_type: currentModel,
+          redact_pii: redactPii
         });
+        const send = () => fetch('/predict', {
+          method: 'POST',
+          headers: Object.assign(
+            { 'Content-Type': 'application/json' },
+            localStorage.getItem('ticketlensApiKey') ? { 'X-API-Key': localStorage.getItem('ticketlensApiKey') } : {}
+          ),
+          body: payload
+        });
+
+        let response = await send();
+        if (response.status === 401) {
+          const key = prompt('This TicketLens server requires an API key. Enter it to continue:');
+          if (key) {
+            localStorage.setItem('ticketlensApiKey', key.trim());
+            response = await send();
+          }
+          if (response.status === 401) localStorage.removeItem('ticketlensApiKey');
+        }
 
         if (!response.ok) {
           const err = await response.json();
@@ -1341,6 +1393,9 @@
       const confPct = (data.confidence * 100).toFixed(1);
       conf.innerText = `${confPct}% Confidence`;
 
+      const warnings = data.warnings || [];
+      const thresholdPct = Math.round((data.confidence_threshold || 0.8) * 100);
+
       if (data.decision === 'Auto Accept') {
         banner.className = 'decision-hud auto-accept';
         icon.innerText = '✓';
@@ -1349,9 +1404,32 @@
       } else {
         banner.className = 'decision-hud needs-review';
         icon.innerText = '⚠️';
-        title.innerText = 'Needs Review (Confidence < 80%)';
+        title.innerText = warnings.length ? 'Needs Review (Input Warning)' : `Needs Review (Confidence < ${thresholdPct}%)`;
         document.getElementById('textRoutingAction').innerText = 'Flagged for Human Review';
       }
+
+      const warnBox = document.getElementById('boxWarnings');
+      warnBox.textContent = warnings.map(w => '⚠️ ' + w).join('\n');
+      warnBox.style.whiteSpace = 'pre-line';
+      warnBox.style.display = warnings.length ? 'block' : 'none';
+
+      const cueRow = document.getElementById('rowCues');
+      cueRow.replaceChildren();
+      const cues = Object.entries(data.itil_cues || {});
+      if (cues.length) {
+        const lbl = document.createElement('span');
+        lbl.textContent = 'ITIL signals:';
+        cueRow.appendChild(lbl);
+        for (const [category, names] of cues) {
+          for (const name of names) {
+            const chip = document.createElement('span');
+            chip.className = 'cue-chip';
+            chip.textContent = `${category} · ${name}`;
+            cueRow.appendChild(chip);
+          }
+        }
+      }
+      cueRow.style.display = cues.length ? 'flex' : 'none';
 
       // Hero
       const cat = document.getElementById('textCategory');
