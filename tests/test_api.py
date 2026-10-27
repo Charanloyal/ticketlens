@@ -114,6 +114,44 @@ def test_predict_handwritten_invoice_is_request(test_client: TestClient):
     assert "Request" in data["itil_cues"]
 
 
+def test_predict_returns_routing_and_redacted_text(test_client: TestClient):
+    data = test_client.post(
+        "/predict",
+        json={"text": "Hi, I'm john.doe@acme.com, call 555-123-4567. Server 10.0.0.12 is down right now.", "model_type": "baseline"},
+    ).json()
+    assert "john.doe@acme.com" not in data["processed_text"]
+    for token in ("[EMAIL]", "[PHONE]", "[IP]"):
+        assert token in data["processed_text"]
+    route = data["routing"]
+    assert route["auto_routed"] == (data["decision"] == "Auto Accept")
+    if route["auto_routed"]:
+        assert route["queue"] == route["suggested_queue"]
+    else:
+        assert route["queue"] == "Human Triage Queue"
+    assert route["response_target"]
+
+
+def test_auto_accepted_ticket_is_routed_to_its_category_queue(test_client: TestClient):
+    data = test_client.post(
+        "/predict",
+        json={"text": "Please upgrade all office laptops from Windows 10 to Windows 11 next weekend.", "model_type": "baseline"},
+    ).json()
+    assert data["decision"] == "Auto Accept"
+    assert data["routing"] == {
+        "queue": "Change Advisory Board (CAB)",
+        "response_target": "Assessed at the next CAB meeting",
+        "suggested_queue": "Change Advisory Board (CAB)",
+        "auto_routed": True,
+    }
+
+
+def test_redaction_can_be_disabled(test_client: TestClient):
+    data = test_client.post(
+        "/predict", json={"text": "Mail bob@corp.com about the VPN outage", "redact_pii": False, "model_type": "baseline"}
+    ).json()
+    assert "bob@corp.com" in data["processed_text"]
+
+
 def test_predict_non_english_forces_review(test_client: TestClient):
     response = test_client.post(
         "/predict",

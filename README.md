@@ -8,7 +8,7 @@
 [![Keras](https://img.shields.io/badge/Baseline-TensorFlow%20%2F%20Keras-FF6F00.svg)](https://keras.io/)
 [![Benchmark](https://github.com/Charanloyal/ticketlens/actions/workflows/benchmark.yml/badge.svg)](https://github.com/Charanloyal/ticketlens/actions/workflows/benchmark.yml)
 [![CI](https://github.com/Charanloyal/ticketlens/actions/workflows/ci.yml/badge.svg)](https://github.com/Charanloyal/ticketlens/actions/workflows/ci.yml)
-[![Tests: Pytest](https://img.shields.io/badge/Tests-63-brightgreen.svg)](https://docs.pytest.org/)
+[![Tests: Pytest](https://img.shields.io/badge/Tests-66-brightgreen.svg)](https://docs.pytest.org/)
 
 **TicketLens** is an end-to-end IT service desk ticket classification and triage engine with an ultra-sleek, dark-mode glassmorphic web dashboard. It classifies IT issues into standard ITIL categories (**Incident**, **Request**, **Problem**, **Change**) by fine-tuning a pre-trained **DistilBERT** with **LoRA (Hugging Face Transformers + PEFT, PyTorch)** and benchmarking it on **macro-F1** against a **TF-IDF + Logistic Regression** baseline and a **Keras (TensorFlow) CNN** baseline, all scored on the identical held-out test set.
 
@@ -189,7 +189,7 @@ pip install -e .
 
 | Command | Purpose |
 | :--- | :--- |
-| `pytest tests/ -v` | Run the complete automated test suite (63 tests) |
+| `pytest tests/ -v` | Run the complete automated test suite (66 tests) |
 | `python -m ticketlens.train_baseline --mode quick` | Train TF-IDF baseline model (quick verification run) |
 | `python -m ticketlens.build` | Production build exactly as on Render: download dataset, prepare corpus, train serving model (each step in its own process) |
 | `python -m ticketlens.train_baseline --mode all` | Train the serving TF-IDF model on the full dataset in a single process (local development) |
@@ -315,8 +315,16 @@ curl -X GET http://localhost:8000/metadata
 
 ### 3. Prediction Endpoint (`POST /predict`)
 
-Responses also include `itil_cues` (ITIL keyword signals that adjusted the probabilities) and
-`warnings` (e.g. non-English input). Any warning forces `"decision": "Needs Review"`.
+Responses also include `itil_cues` (ITIL keyword signals that adjusted the probabilities),
+`warnings` (e.g. non-English input; any warning forces `"decision": "Needs Review"`), `routing` (the resolver
+queue and response target from [`configs/routing.yaml`](configs/routing.yaml): auto-accepted tickets go to their
+category's queue, everything else to the human triage queue with the model's suggestion) and `processed_text`
+(the exact text the model classified, with PII replaced by `[EMAIL]`, `[PHONE]`, `[IP]`).
+
+**Why classify at all?** People who raise tickets write free text and don't pick (or mis-pick) ITIL categories,
+but each category goes to a different team with a different deadline: Incidents to on-call support within hours,
+Requests to fulfilment, Problems to root-cause engineers, Changes to the Change Advisory Board. TicketLens
+automates that first triage step and only auto-routes when it is confident; everything else goes to a human.
 
 #### Request (Incident Example)
 ```bash

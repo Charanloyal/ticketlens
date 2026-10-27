@@ -1,0 +1,18 @@
+﻿# Where each triage decision is routed (illustrative ITIL resolver groups and response targets).
+# Auto-accepted tickets go to their category's queue; tickets below the confidence gate (or with an
+# input warning) go to the "review" queue with the model's suggested queue attached.
+Incident:
+  queue: "Service Desk L2 (on-call)"
+  response_target: "Respond within 1 hour"
+Request:
+  queue: "Service Fulfilment"
+  response_target: "Fulfil within 3 business days"
+Problem:
+  queue: "Problem Management"
+  response_target: "Root-cause review within 5 business days"
+Change:
+  queue: "Change Advisory Board (CAB)"
+  response_target: "Assessed at the next CAB meeting"
+review:
+  queue: "Human Triage Queue"
+  response_target: "Manual classification within 4 hours"

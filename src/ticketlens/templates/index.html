@@ -702,6 +702,52 @@
       font-size: 11px;
     }
 
+    .route-panel {
+      display: none;
+      margin: -6px 0 18px;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-glass);
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .route-panel strong { color: var(--text-primary); }
+
+    .processed-text {
+      display: none;
+      margin: 18px 0 0;
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      border: 1px dashed var(--border-glass);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .pii-token {
+      padding: 0 4px;
+      border-radius: 4px;
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      font-weight: 700;
+    }
+
+    .explainer-note {
+      margin: 14px 0 6px;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      background: rgba(56, 189, 248, 0.07);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
     .category-meta {
       font-size: 13px;
       color: var(--text-secondary);
@@ -1032,6 +1078,9 @@
               <!-- ITIL cues that adjusted the model output -->
               <div id="rowCues" class="cue-row"></div>
 
+              <!-- Where the ticket goes (resolver queue + response target) -->
+              <div id="boxRoute" class="route-panel" role="status"></div>
+
               <!-- Probability Stack -->
               <div class="bars-stack">
                 <div class="bar-row">
@@ -1066,6 +1115,9 @@
                   <div class="bar-track"><div id="barChange" class="bar-fill Change" style="width: 0%;"></div></div>
                 </div>
               </div>
+
+              <!-- Exact text the model classified (after cleaning / PII redaction) -->
+              <div id="boxProcessed" class="processed-text"></div>
             </div>
           </div>
 
@@ -1103,6 +1155,10 @@
           <span class="card-badge">Same Test Set</span>
         </div>
         <p style="color: var(--text-secondary); font-size: 14px;">All models are scored on the identical held-out test split of <code>Tobi-Bueck/customer-support-tickets</code>. TF-IDF, Keras and DistilBERT are trained on the same subset; the served model uses all training data. Numbers are loaded from <a href="/reports/model_comparison.json" target="_blank" style="color: #38bdf8;">reports/model_comparison.json</a>, produced by the <a href="https://github.com/Charanloyal/ticketlens/actions/workflows/benchmark.yml" target="_blank" style="color: #38bdf8;">Benchmark workflow</a>.</p>
+
+        <div class="explainer-note">
+          <strong style="color: #7dd3fc;">What is this tab?</strong> It is the models' fixed <em>report card</em>, not a live view: before deployment every model was tested on 3,563 tickets it had never seen and whose correct category is known. The scores below only change when the models are retrained. To try the model on your own text, use the <em>Live Ticket Triage</em> tab.
+        </div>
 
         <div id="benchStatus" style="color: var(--text-muted); font-size: 13px; margin: 12px 0;">Loading benchmark results…</div>
         <table class="data-table" id="benchTable" style="display: none;">
@@ -1512,6 +1568,53 @@
         }
       }
       cueRow.style.display = cues.length ? 'flex' : 'none';
+
+      // Routing: which resolver queue receives the ticket and its response target
+      const route = data.routing || {};
+      const routeBox = document.getElementById('boxRoute');
+      routeBox.replaceChildren();
+      if (route.queue) {
+        const addLine = (label, value) => {
+          const line = document.createElement('div');
+          const b = document.createElement('strong');
+          b.textContent = value;
+          line.append(label, b);
+          routeBox.appendChild(line);
+        };
+        addLine('📬 Routed to: ', route.queue);
+        if (route.response_target) addLine('⏱️ Target: ', route.response_target);
+        if (!route.auto_routed && route.suggested_queue) {
+          addLine('💡 Model suggestion for the reviewer: ', `${data.predicted_category} → ${route.suggested_queue}`);
+        }
+        document.getElementById('textRoutingAction').innerText = route.auto_routed ? `Auto-routed to ${route.queue}` : 'Flagged for Human Review';
+      }
+      routeBox.style.display = route.queue ? 'block' : 'none';
+
+      // Exact text the model saw, with redacted PII highlighted
+      const processedBox = document.getElementById('boxProcessed');
+      processedBox.replaceChildren();
+      const processed = data.processed_text || '';
+      if (processed) {
+        const parts = processed.split(/(\[(?:EMAIL|PHONE|IP)\])/);
+        const redactions = parts.filter(p => /^\[(EMAIL|PHONE|IP)\]$/.test(p)).length;
+        const head = document.createElement('div');
+        head.style.cssText = 'font-family: Inter, sans-serif; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px;';
+        head.textContent = redactions
+          ? `Text sent to the model · ${redactions} personal detail${redactions > 1 ? 's' : ''} redacted`
+          : 'Text sent to the model · no personal details found';
+        processedBox.appendChild(head);
+        for (const part of parts) {
+          if (/^\[(EMAIL|PHONE|IP)\]$/.test(part)) {
+            const tok = document.createElement('span');
+            tok.className = 'pii-token';
+            tok.textContent = part;
+            processedBox.appendChild(tok);
+          } else if (part) {
+            processedBox.appendChild(document.createTextNode(part));
+          }
+        }
+      }
+      processedBox.style.display = processed ? 'block' : 'none';
 
       // Hero
       const cat = document.getElementById('textCategory');

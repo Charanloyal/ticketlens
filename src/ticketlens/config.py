@@ -60,6 +60,13 @@ def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
                 if not p.is_absolute():
                     cfg["paths"][k] = str(root / p)
 
+    # Triage routing (queues / response targets) lives in its own file so that editing it does not
+    # look like a model-configuration change.
+    routing_path = target_path.parent / "routing.yaml"
+    if "routing" not in cfg and routing_path.exists():
+        with open(routing_path, "r", encoding="utf-8") as f:
+            cfg["routing"] = yaml.safe_load(f) or {}
+
     # Environment overrides (e.g. set in render.yaml / Render dashboard)
     threshold = os.environ.get("TICKETLENS_CONFIDENCE_THRESHOLD", "").strip()
     if threshold:

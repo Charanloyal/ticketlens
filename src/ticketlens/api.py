@@ -124,6 +124,15 @@ class PredictResponse(BaseModel):
         default_factory=list,
         description="Input quality warnings (e.g. non-English text). Any warning forces 'Needs Review'.",
     )
+    routing: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Where the ticket goes: resolver queue and response target (auto-routed), or the human "
+        "triage queue with the model's suggested queue (Needs Review). Configured under `routing` in config.yaml.",
+    )
+    processed_text: str = Field(
+        "",
+        description="The exact text the model classified, after cleaning and (if enabled) PII redaction.",
+    )
 
 
 class HealthResponse(BaseModel):

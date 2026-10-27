@@ -178,6 +178,20 @@ class TicketPredictor:
             "confidence_threshold": self.confidence_threshold,
             "itil_cues": matched_cues,
             "warnings": warnings,
+            "routing": self._route(predicted_category, auto),
+            "processed_text": cleaned_text,
+        }
+
+    def _route(self, category: str, auto: bool) -> Dict[str, Any]:
+        """Map the decision to the resolver queue and response target configured under `routing`."""
+        routes = self.cfg.get("routing", {})
+        suggested = routes.get(category, {})
+        target = suggested if auto else routes.get("review", {})
+        return {
+            "queue": target.get("queue", category if auto else "Human triage"),
+            "response_target": target.get("response_target", ""),
+            "suggested_queue": suggested.get("queue", category),
+            "auto_routed": auto,
         }
 
     def _baseline_probabilities(self, cleaned_text: str) -> Dict[str, float]:
