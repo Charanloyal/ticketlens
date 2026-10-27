@@ -274,23 +274,30 @@ def error_analysis(
 
 
 def handwritten_accuracy(predict: PredictProba, label2id: Dict[str, int]) -> Optional[Dict[str, Any]]:
-    """Accuracy on hand-written, real-world-style tickets (dev + holdout fixtures), model output only."""
+    """Accuracy on hand-written, real-world-style tickets.
+
+    'holdout' (24 tickets) was never used for any tuning and is the headline number; 'development' (48 tickets)
+    was used to design the ITIL cues, so it is reported separately and must not be quoted for the cue variant.
+    """
     fixtures = get_project_root() / "data" / "fixtures"
-    tickets = []
-    for name in ("handwritten_eval.json", "handwritten_holdout.json"):
+    out: Dict[str, Any] = {}
+    for split, name in (("holdout", "handwritten_holdout.json"), ("development", "handwritten_eval.json")):
         path = fixtures / name
-        if path.exists():
-            tickets += json.loads(path.read_text(encoding="utf-8"))
-    if not tickets:
+        if not path.exists():
+            continue
+        tickets = json.loads(path.read_text(encoding="utf-8"))
+        probs = predict([clean_and_redact_text(t["text"]) for t in tickets])
+        y = np.array([label2id[t["label"]] for t in tickets])
+        preds = probs.argmax(axis=1)
+        out[split] = {
+            "tickets": len(tickets),
+            "accuracy": round(float(accuracy_score(y, preds)), 4),
+            "macro_f1": round(float(f1_score(y, preds, average="macro", zero_division=0)), 4),
+        }
+    if not out:
         return None
-    probs = predict([clean_and_redact_text(t["text"]) for t in tickets])
-    y = np.array([label2id[t["label"]] for t in tickets])
-    preds = probs.argmax(axis=1)
-    return {
-        "tickets": len(tickets),
-        "accuracy": round(float(accuracy_score(y, preds)), 4),
-        "macro_f1": round(float(f1_score(y, preds, average="macro", zero_division=0)), 4),
-    }
+    headline = out.get("holdout") or out["development"]
+    return {**headline, **out}
 
 
 def evaluate_predictions(
@@ -442,7 +449,7 @@ def generate_summary_markdown(summary: Dict[str, Any]) -> str:
         f"- **Held-out test set:** {summary['test_samples_count']:,} tickets (identical for every model)",
         f"- **Classes:** {', '.join(summary['classes'])}\n",
         "## Macro-F1 Benchmark\n",
-        "| Model | Train tickets | Accuracy | Macro-F1 | Weighted-F1 | Hand-written acc. | P50 latency |",
+        "| Model | Train tickets | Accuracy | Macro-F1 | Weighted-F1 | Hand-written holdout acc. | P50 latency |",
         "| :--- | ---: | :---: | :---: | :---: | :---: | ---: |",
     ]
     for key, res in models.items():
@@ -469,7 +476,7 @@ def generate_summary_markdown(summary: Dict[str, Any]) -> str:
         "\n## Notes\n",
         "- TF-IDF, Keras and DistilBERT are trained on the **same** training subset and scored on the **same** test tickets.",
         "- The served TF-IDF model uses all training data plus short-text augmentation; the production row adds the ITIL cue correction.",
-        "- Hand-written accuracy uses the 72 hand-labelled tickets in `data/fixtures/handwritten_*.json` (model output only for non-production rows).",
+        "- Hand-written holdout accuracy uses the 24 hand-labelled tickets in `data/fixtures/handwritten_holdout.json`, never used for tuning (the 48-ticket development set used to design the ITIL cues is reported separately in the JSON).",
         "- See `error_analysis.md` for confusion pairs, confidence-gate precision/coverage, length-bucket parity and error examples.\n",
         "## Figures\n",
         "- `reports/figures/model_comparison_f1.png`",

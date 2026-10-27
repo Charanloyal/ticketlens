@@ -80,7 +80,15 @@ def load_keras_model(model_dir: Path):
 
 
 def keras_predict_proba(model, texts: List[str], batch_size: int = 256) -> np.ndarray:
-    return np.asarray(model.predict(_as_model_input(texts), batch_size=batch_size, verbose=0))
+    """Class probabilities via direct model calls (model.predict() adds per-call pipeline overhead that
+    would dominate single-ticket latency measurements)."""
+    if not texts:
+        return np.zeros((0, model.output_shape[-1]), dtype=np.float32)
+    batches = [
+        np.asarray(model(_as_model_input(texts[i: i + batch_size]), training=False))
+        for i in range(0, len(texts), batch_size)
+    ]
+    return np.concatenate(batches)
 
 
 def train_keras_model(

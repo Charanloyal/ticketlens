@@ -1099,70 +1099,67 @@
     <div id="section-benchmarks" class="tab-section">
       <div class="glass-card">
         <div class="card-header">
-          <h2>Held-Out Test Set Performance & Latency Benchmark</h2>
-          <span class="card-badge">Strict Evaluation</span>
+          <h2>Macro-F1 Benchmark: DistilBERT + LoRA vs. TF-IDF vs. Keras</h2>
+          <span class="card-badge">Same Test Set</span>
         </div>
-        <p style="color: var(--text-secondary); font-size: 14px;">The live service runs the <strong>TF-IDF + Logistic Regression</strong> model (trained on the full <code>Tobi-Bueck/customer-support-tickets</code> English set) with the ITIL cue correction. Measured on the held-out test split (3,563 tickets) and on hand-written tickets:</p>
+        <p style="color: var(--text-secondary); font-size: 14px;">All models are scored on the identical held-out test split of <code>Tobi-Bueck/customer-support-tickets</code>. TF-IDF, Keras and DistilBERT are trained on the same subset; the served model uses all training data. Numbers are loaded from <a href="/reports/model_comparison.json" target="_blank" style="color: #38bdf8;">reports/model_comparison.json</a>, produced by the <a href="https://github.com/Charanloyal/ticketlens/actions/workflows/benchmark.yml" target="_blank" style="color: #38bdf8;">Benchmark workflow</a>.</p>
 
-        <table class="data-table">
+        <div id="benchStatus" style="color: var(--text-muted); font-size: 13px; margin: 12px 0;">Loading benchmark results…</div>
+        <table class="data-table" id="benchTable" style="display: none;">
           <thead>
             <tr>
               <th>Model</th>
+              <th>Train tickets</th>
               <th>Accuracy</th>
               <th>Macro-F1</th>
               <th>Weighted-F1</th>
-              <th>Hand-written holdout</th>
-              <th>Auto-accept precision</th>
-              <th>P50 / P95 Latency</th>
+              <th title="24 hand-written tickets never used for tuning">Hand-written holdout</th>
+              <th>P50 latency</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td><strong>TF-IDF + LR + ITIL cues</strong> <span class="card-badge" style="margin-left: 6px;">Live</span></td>
-              <td>0.8532</td>
-              <td><span style="color: var(--cyan-glow); font-weight: 700;">0.8618</span></td>
-              <td>0.8549</td>
-              <td><span style="color: var(--cyan-glow); font-weight: 700;">79%</span></td>
-              <td>94.8% (66% auto-accepted)</td>
-              <td>0.81 / 1.73 ms</td>
-            </tr>
-            <tr>
-              <td><strong>TF-IDF + LR (model only)</strong></td>
-              <td>0.8695</td>
-              <td>0.8763</td>
-              <td>0.8700</td>
-              <td>38%</td>
-              <td>96.4% (65% auto-accepted)</td>
-              <td>0.76 / 1.74 ms</td>
-            </tr>
-            <tr>
-              <td><strong>DistilBERT (LoRA / PEFT)</strong> <span style="font-size: 11px; color: var(--text-muted);">historical quick run, not deployed</span></td>
-              <td>0.4444</td>
-              <td>0.3273</td>
-              <td>0.3816</td>
-              <td>&mdash;</td>
-              <td>&mdash;</td>
-              <td>13.32 / 14.92 ms</td>
-            </tr>
-          </tbody>
+          <tbody id="benchBody"></tbody>
         </table>
-        <p style="color: var(--text-muted); font-size: 12px; margin-top: 10px;">The dataset is long-form and synthetic; ITIL cues trade ~1.5 Macro-F1 points on it for a large gain on short, real-world tickets (24-ticket holdout, so treat as indicative). DistilBERT needs &gt;512 MB RAM and is not served on the Render free tier.</p>
+
+        <h3 style="font-size: 16px; margin: 26px 0 8px; color: #38bdf8;">Precision / Recall per Class</h3>
+        <table class="data-table" id="prTable" style="display: none;">
+          <thead id="prHead"></thead>
+          <tbody id="prBody"></tbody>
+        </table>
+
+        <h3 style="font-size: 16px; margin: 26px 0 8px; color: #38bdf8;">Error Analysis Highlights</h3>
+        <div id="errorHighlights" style="font-size: 13px; color: var(--text-secondary); line-height: 1.7;"></div>
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">Full report: <a href="/reports/error_analysis.md" target="_blank" style="color: #38bdf8;">error_analysis.md</a> (confusion pairs, confidence-gate precision/coverage, length-bucket parity, most confident errors).</p>
 
         <div class="figures-deck">
           <div class="deck-card">
-            <img src="/reports/figures/confusion_matrix_baseline.png" alt="Confusion Matrix of the live model" onerror="this.style.display='none'">
-            <h4 style="font-size: 14px; margin-bottom: 4px;">Live Model Confusion Matrix</h4>
-            <p style="font-size: 12px; color: var(--text-muted);">3,563 held-out tickets; most errors are Incident &harr; Problem</p>
+            <img src="/reports/figures/model_comparison_f1.png" alt="Model comparison" onerror="this.parentElement.style.display='none'">
+            <h4 style="font-size: 14px; margin-bottom: 4px;">Accuracy / Macro-F1 / Weighted-F1</h4>
+            <p style="font-size: 12px; color: var(--text-muted);">All models on the same test tickets</p>
           </div>
           <div class="deck-card">
-            <img src="/reports/figures/confusion_matrix_transformer.png" alt="Confusion Matrix Transformer" onerror="this.style.display='none'">
-            <h4 style="font-size: 14px; margin-bottom: 4px;">DistilBERT LoRA Confusion Matrix</h4>
-            <p style="font-size: 12px; color: var(--text-muted);">Historical quick-mode run (45 test tickets)</p>
+            <img src="/reports/figures/precision_coverage.png" alt="Precision vs coverage" onerror="this.parentElement.style.display='none'">
+            <h4 style="font-size: 14px; margin-bottom: 4px;">Confidence Gate Trade-off</h4>
+            <p style="font-size: 12px; color: var(--text-muted);">Precision of auto-accepted tickets vs. share auto-accepted</p>
           </div>
           <div class="deck-card">
-            <img src="/reports/figures/model_comparison_f1.png" alt="Model Comparison F1" onerror="this.style.display='none'">
-            <h4 style="font-size: 14px; margin-bottom: 4px;">F1-Score Comparison</h4>
-            <p style="font-size: 12px; color: var(--text-muted);">Historical quick-mode comparison (45 test tickets)</p>
+            <img src="/reports/figures/confusion_matrix_transformer.png" alt="DistilBERT confusion matrix" onerror="this.parentElement.style.display='none'">
+            <h4 style="font-size: 14px; margin-bottom: 4px;">DistilBERT + LoRA</h4>
+            <p style="font-size: 12px; color: var(--text-muted);">Confusion matrix</p>
+          </div>
+          <div class="deck-card">
+            <img src="/reports/figures/confusion_matrix_keras.png" alt="Keras confusion matrix" onerror="this.parentElement.style.display='none'">
+            <h4 style="font-size: 14px; margin-bottom: 4px;">Keras CNN (TensorFlow)</h4>
+            <p style="font-size: 12px; color: var(--text-muted);">Confusion matrix</p>
+          </div>
+          <div class="deck-card">
+            <img src="/reports/figures/confusion_matrix_tfidf_benchmark.png" alt="TF-IDF confusion matrix" onerror="this.parentElement.style.display='none'">
+            <h4 style="font-size: 14px; margin-bottom: 4px;">TF-IDF + Logistic Regression</h4>
+            <p style="font-size: 12px; color: var(--text-muted);">Confusion matrix</p>
+          </div>
+          <div class="deck-card">
+            <img src="/reports/figures/confusion_matrix_baseline_itil.png" alt="Served model confusion matrix" onerror="this.parentElement.style.display='none'">
+            <h4 style="font-size: 14px; margin-bottom: 4px;">Live model (TF-IDF + ITIL cues)</h4>
+            <p style="font-size: 12px; color: var(--text-muted);">Confusion matrix of what this server runs</p>
           </div>
         </div>
       </div>
@@ -1175,55 +1172,31 @@
           <h2>SHAP & Positive / Negative N-Gram Coefficients</h2>
           <span class="card-badge">Transparency</span>
         </div>
-        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px;">Top driving lexical features per ITIL category extracted from TF-IDF Linear Attribution & SHAP LinearExplainer:</p>
+        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px;">Top driving n-grams per ITIL category for the live TF-IDF model: logistic-regression weights and mean |SHAP| (LinearExplainer) from <a href="/reports/explainability_and_bias_report.md" target="_blank" style="color: #38bdf8;">explainability_and_bias_report.md</a>:</p>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px;">
           <div class="deck-card" style="text-align: left; padding: 20px;">
             <h3 style="color: #f43f5e; font-size: 16px; margin-bottom: 6px;">🚨 Incident</h3>
             <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Unplanned interruption or service outage</p>
-            <div style="font-size: 13px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px;">
-              <div>• <code>system</code> (+0.7715)</div>
-              <div>• <code>issue</code> (+0.7059)</div>
-              <div>• <code>the issue</code> (+0.5922)</div>
-              <div>• <code>unexpected</code> (+0.5879)</div>
-              <div>• <code>resolve</code> (+0.5858)</div>
-            </div>
+            <div id="feat-Incident" style="font-size: 13px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px;">Loading…</div>
           </div>
 
           <div class="deck-card" style="text-align: left; padding: 20px;">
             <h3 style="color: #10b981; font-size: 16px; margin-bottom: 6px;">📋 Request</h3>
             <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Formal access, hardware, or query request</p>
-            <div style="font-size: 13px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px;">
-              <div>• <code>on</code> (+0.8492)</div>
-              <div>• <code>you</code> (+0.7797)</div>
-              <div>• <code>could you</code> (+0.7484)</div>
-              <div>• <code>information on</code> (+0.7184)</div>
-              <div>• <code>inquiry</code> (+0.7049)</div>
-            </div>
+            <div id="feat-Request" style="font-size: 13px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px;">Loading…</div>
           </div>
 
           <div class="deck-card" style="text-align: left; padding: 20px;">
             <h3 style="color: #f59e0b; font-size: 16px; margin-bottom: 6px;">🔍 Problem</h3>
             <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Root cause analysis of recurring issues</p>
-            <div style="font-size: 13px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px;">
-              <div>• <code>server</code> (+0.7460)</div>
-              <div>• <code>been</code> (+0.6730)</div>
-              <div>• <code>the server</code> (+0.6357)</div>
-              <div>• <code>crashes</code> (+0.6006)</div>
-              <div>• <code>have been</code> (+0.5459)</div>
-            </div>
+            <div id="feat-Problem" style="font-size: 13px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px;">Loading…</div>
           </div>
 
           <div class="deck-card" style="text-align: left; padding: 20px;">
             <h3 style="color: #a855f7; font-size: 16px; margin-bottom: 6px;">⚙️ Change</h3>
             <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Scheduled infrastructure or policy modification</p>
-            <div style="font-size: 13px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px;">
-              <div>• <code>request</code> (+0.9382)</div>
-              <div>• <code>current</code> (+0.9103)</div>
-              <div>• <code>upgrade</code> (+0.8474)</div>
-              <div>• <code>analytics tools</code> (+0.7795)</div>
-              <div>• <code>tools</code> (+0.6818)</div>
-            </div>
+            <div id="feat-Change" style="font-size: 13px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px;">Loading…</div>
           </div>
         </div>
       </div>
@@ -1236,25 +1209,31 @@
           <h2>Dataset-Level Bias & Privacy (PII) Audit</h2>
           <span class="card-badge">Governance</span>
         </div>
-        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 22px;">Audit results for the 28,261 English IT support tickets:</p>
+        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 22px;"><span id="auditIntro">Audit results for the English IT support tickets:</span></p>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px;">
           <div class="deck-card" style="text-align: left; padding: 20px;">
             <div style="color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase;">Class Imbalance Ratio</div>
-            <div style="font-size: 26px; font-weight: 800; color: var(--cyan-glow); margin: 6px 0;">3.75 : 1</div>
-            <p style="font-size: 12px; color: var(--text-muted);">Incident (39.7%), Request (28.9%), Problem (20.9%), Change (10.6%). Balanced across real operational queues.</p>
+            <div id="auditImbalance" style="font-size: 26px; font-weight: 800; color: var(--cyan-glow); margin: 6px 0;">—</div>
+            <p id="auditDistribution" style="font-size: 12px; color: var(--text-muted);">Loading class distribution…</p>
           </div>
 
           <div class="deck-card" style="text-align: left; padding: 20px;">
             <div style="color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase;">PII Sanitizer Protection</div>
             <div style="font-size: 26px; font-weight: 800; color: var(--emerald-glow); margin: 6px 0;">Active Redaction</div>
-            <p style="font-size: 12px; color: var(--text-muted);">Regex pipeline replaces customer emails, telephone numbers, and IPv4 addresses before model embedding.</p>
+            <p id="auditPii" style="font-size: 12px; color: var(--text-muted);">Regex pipeline replaces customer emails, telephone numbers, and IPv4 addresses before model embedding.</p>
           </div>
 
           <div class="deck-card" style="text-align: left; padding: 20px;">
             <div style="color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase;">Automated Routing Gate</div>
             <div style="font-size: 26px; font-weight: 800; color: var(--amber-glow); margin: 6px 0;">80% Threshold</div>
             <p style="font-size: 12px; color: var(--text-muted);">Tickets scoring &lt; 0.80 probability are routed to human review, preventing automated misassignment.</p>
+          </div>
+
+          <div class="deck-card" style="text-align: left; padding: 20px;">
+            <div style="color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase;">Performance Parity by Ticket Length</div>
+            <div id="auditParity" style="font-size: 13px; color: var(--text-secondary); margin-top: 8px; line-height: 1.7;">Loading…</div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">Macro-F1 of the live model per length bucket (bias check: short vs. long tickets).</p>
           </div>
         </div>
       </div>
@@ -1553,7 +1532,122 @@
       }
     }
 
+    function fmt(v, digits = 4) { return (typeof v === 'number') ? v.toFixed(digits) : '—'; }
+
+    async function loadBenchmarks() {
+      const status = document.getElementById('benchStatus');
+      try {
+        const res = await fetch('/reports/model_comparison.json', { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const models = Object.values(data.models || {});
+        if (!models.length) throw new Error('no models in report');
+        const best = Math.max(...models.map(m => m.macro_f1));
+
+        const body = document.getElementById('benchBody');
+        body.replaceChildren();
+        for (const m of models) {
+          const tr = document.createElement('tr');
+          const hw = m.handwritten ? `${Math.round(m.handwritten.accuracy * 100)}%` : '—';
+          const cells = [m.model_name, m.train_samples ? m.train_samples.toLocaleString() : '—', fmt(m.accuracy),
+                         fmt(m.macro_f1), fmt(m.weighted_f1), hw, m.latency ? `${m.latency.p50_ms} ms` : '—'];
+          cells.forEach((c, i) => {
+            const td = document.createElement('td');
+            td.textContent = c;
+            if (i === 0) td.style.fontWeight = '700';
+            if (i === 3 && m.macro_f1 === best) { td.style.color = 'var(--cyan-glow)'; td.style.fontWeight = '700'; }
+            tr.appendChild(td);
+          });
+          body.appendChild(tr);
+        }
+        document.getElementById('benchTable').style.display = '';
+        status.textContent = `${data.test_samples_count.toLocaleString()} held-out test tickets · classes: ${data.classes.join(', ')}`;
+
+        const head = document.getElementById('prHead');
+        const prBody = document.getElementById('prBody');
+        head.replaceChildren(); prBody.replaceChildren();
+        const hr = document.createElement('tr');
+        ['Model', ...data.classes.map(c => `${c} P / R`)].forEach(h => { const th = document.createElement('th'); th.textContent = h; hr.appendChild(th); });
+        head.appendChild(hr);
+        for (const m of models) {
+          const tr = document.createElement('tr');
+          const first = document.createElement('td'); first.textContent = m.model_name; tr.appendChild(first);
+          for (const c of data.classes) {
+            const r = (m.classification_report || {})[c] || {};
+            const td = document.createElement('td');
+            td.textContent = `${fmt(r.precision, 2)} / ${fmt(r.recall, 2)}`;
+            tr.appendChild(td);
+          }
+          prBody.appendChild(tr);
+        }
+        document.getElementById('prTable').style.display = '';
+
+        const hl = document.getElementById('errorHighlights');
+        hl.replaceChildren();
+        for (const m of models) {
+          const ea = m.error_analysis || {};
+          const top = (ea.top_confusions || [])[0];
+          const gate = (m.threshold_analysis || []).find(t => t.threshold === 0.8);
+          const div = document.createElement('div');
+          const strong = document.createElement('strong'); strong.textContent = m.model_name + ': ';
+          div.appendChild(strong);
+          const parts = [`${(ea.error_rate * 100).toFixed(1)}% errors`];
+          if (top) parts.push(`most common ${top.true} → ${top.predicted} (${Math.round(top.share_of_errors * 100)}% of errors)`);
+          if (gate && gate.precision !== null) parts.push(`at the 0.8 gate ${Math.round(gate.coverage * 100)}% auto-accepted with ${(gate.precision * 100).toFixed(1)}% precision`);
+          div.appendChild(document.createTextNode(parts.join(' · ')));
+          hl.appendChild(div);
+        }
+      } catch (err) {
+        status.textContent = 'Benchmark report not available on this server (' + err.message + '). Run `python -m ticketlens.evaluate`.';
+      }
+    }
+
+    async function loadExplainability() {
+      const getJson = async (path) => { const r = await fetch(path, { cache: 'no-store' }); if (!r.ok) throw new Error(path); return r.json(); };
+      try {
+        const [top, shapSummary] = await Promise.all([getJson('/reports/top_features_per_class.json'), getJson('/reports/shap_summary.json').catch(() => ({}))]);
+        for (const [cls, info] of Object.entries(top)) {
+          const box = document.getElementById('feat-' + cls);
+          if (!box) continue;
+          box.replaceChildren();
+          const shapRank = Object.fromEntries((shapSummary[cls] || []).map(x => [x.feature, x.mean_abs_shap]));
+          for (const f of (info.top_positive_features || []).slice(0, 6)) {
+            const row = document.createElement('div');
+            const code = document.createElement('code'); code.textContent = f.feature;
+            row.append('• ', code, ` (+${f.weight.toFixed(3)}` + (shapRank[f.feature] ? `, |SHAP| ${shapRank[f.feature]}` : '') + ')');
+            box.appendChild(row);
+          }
+        }
+      } catch (err) {
+        document.querySelectorAll('[id^="feat-"]').forEach(el => { el.textContent = 'Run `python -m ticketlens.explain` to generate attributions.'; });
+      }
+      try {
+        const audit = await getJson('/reports/bias_and_fairness_audit.json');
+        const total = audit.total_tickets_audited;
+        document.getElementById('auditIntro').textContent = `Audit results for the ${total.toLocaleString()} cleaned, deduplicated English IT support tickets:`;
+        document.getElementById('auditImbalance').textContent = `${audit.class_imbalance_ratio} : 1`;
+        document.getElementById('auditDistribution').textContent = Object.entries(audit.class_distribution)
+          .map(([c, n]) => `${c} (${(100 * n / total).toFixed(1)}%)`).join(', ') + ' — handled with class-balanced training.';
+        const pii = audit.pii_risk_audit || {};
+        document.getElementById('auditPii').textContent = `In a ${pii.raw_sample_size}-ticket raw sample: ${pii.emails_detected_pre_sanitization} emails, ${pii.phone_numbers_detected_pre_sanitization} phone numbers and ${pii.ip_addresses_detected_pre_sanitization} IP addresses detected before redaction; all are replaced before training and inference.`;
+      } catch (err) { /* keep static fallback text */ }
+      try {
+        const cmp = await getJson('/reports/model_comparison.json');
+        const live = (cmp.models || {}).baseline_itil || (cmp.models || {}).baseline;
+        const box = document.getElementById('auditParity');
+        box.replaceChildren();
+        for (const b of (live ? live.length_buckets : [])) {
+          const row = document.createElement('div');
+          row.textContent = `${b.bucket}: Macro-F1 ${b.macro_f1.toFixed(3)} (${b.tickets.toLocaleString()} tickets)`;
+          box.appendChild(row);
+        }
+        if (!box.childElementCount) box.textContent = 'Not available.';
+      } catch (err) { document.getElementById('auditParity').textContent = 'Not available.'; }
+    }
+
     initServerState();
+    loadBenchmarks();
+    loadExplainability();
   </script>
 </body>
 </html>

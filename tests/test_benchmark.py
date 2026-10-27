@@ -87,6 +87,10 @@ def test_evaluate_models_end_to_end_with_tfidf(base_config, tmp_path):
     assert res["test_samples"] == summary["test_samples_count"] == 36
     assert 0.0 <= res["macro_f1"] <= 1.0
     assert set(res["classification_report"]) >= {"Incident", "Request", "Problem", "Change"}
+    # Headline hand-written score is the untouched 24-ticket holdout; the tuning set is reported separately.
+    assert res["handwritten"]["holdout"]["tickets"] == 24
+    assert res["handwritten"]["accuracy"] == res["handwritten"]["holdout"]["accuracy"]
+    assert res["handwritten"]["development"]["tickets"] == 48
     reports = tmp_path / "reports_dir"
     for name in ("model_comparison.json", "evaluation_summary.md", "error_analysis.md"):
         assert (reports / name).exists()
