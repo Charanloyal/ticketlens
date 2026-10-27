@@ -1,0 +1,59 @@
+{
+  "model_type": "TF-IDF + Logistic Regression",
+  "mode": "full",
+  "train_samples": 7000,
+  "augmented_samples": 0,
+  "val_samples": 1500,
+  "test_samples": 3563,
+  "classes": [
+    "Change",
+    "Incident",
+    "Problem",
+    "Request"
+  ],
+  "training_duration_seconds": 1.8911,
+  "validation_accuracy": 0.8047,
+  "validation_macro_f1": 0.8103,
+  "validation_weighted_f1": 0.8043,
+  "latency_p50_ms": 0.768,
+  "latency_p95_ms": 0.855,
+  "classification_report": {
+    "Change": {
+      "precision": 0.9415584415584416,
+      "recall": 0.9177215189873418,
+      "f1-score": 0.9294871794871795,
+      "support": 158.0
+    },
+    "Incident": {
+      "precision": 0.7709030100334449,
+      "recall": 0.7734899328859061,
+      "f1-score": 0.7721943048576214,
+      "support": 596.0
+    },
+    "Problem": {
+      "precision": 0.5663430420711975,
+      "recall": 0.5608974358974359,
+      "f1-score": 0.5636070853462157,
+      "support": 312.0
+    },
+    "Request": {
+      "precision": 0.9703872437357631,
+      "recall": 0.9815668202764977,
+      "f1-score": 0.9759450171821306,
+      "support": 434.0
+    },
+    "accuracy": 0.8046666666666666,
+    "macro avg": {
+      "precision": 0.8122979343497118,
+      "recall": 0.8084189270117953,
+      "f1-score": 0.8103083967182868,
+      "support": 1500.0
+    },
+    "weighted avg": {
+      "precision": 0.804047680435801,
+      "recall": 0.8046666666666666,
+      "f1-score": 0.8043282187594538,
+      "support": 1500.0
+    }
+  }
+}

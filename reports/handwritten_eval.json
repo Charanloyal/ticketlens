@@ -3,8 +3,8 @@
   "with_itil_cues": {
     "development": {
       "tickets": 48,
-      "accuracy": 0.7917,
-      "macro_f1": 0.793,
+      "accuracy": 0.7708,
+      "macro_f1": 0.7692,
       "auto_accept_rate": 0.3958,
       "auto_accept_precision": 1.0,
       "errors": [
@@ -12,61 +12,67 @@
           "text": "I need access to the shared finance drive",
           "expected": "Request",
           "predicted": "Incident",
-          "confidence": 0.5406
+          "confidence": 0.5431
         },
         {
           "text": "please create an account for our new hire starting monday",
           "expected": "Request",
           "predicted": "Change",
-          "confidence": 0.6527
+          "confidence": 0.6477
         },
         {
           "text": "How do I export my project data to CSV?",
           "expected": "Request",
           "predicted": "Incident",
-          "confidence": 0.3629
+          "confidence": 0.3624
+        },
+        {
+          "text": "Requesting a license for Adobe Acrobat Pro for the marketing team",
+          "expected": "Request",
+          "predicted": "Change",
+          "confidence": 0.4254
         },
         {
           "text": "what are your support hours during the holidays?",
           "expected": "Request",
           "predicted": "Incident",
-          "confidence": 0.6684
+          "confidence": 0.6631
         },
         {
           "text": "Our cloud storage sync failed and files are missing",
           "expected": "Incident",
           "predicted": "Problem",
-          "confidence": 0.7603
+          "confidence": 0.7592
         },
         {
           "text": "Recurring data sync failures between the CRM and the marketing platform",
           "expected": "Problem",
           "predicted": "Incident",
-          "confidence": 0.5577
+          "confidence": 0.5637
         },
         {
           "text": "Integration with Salesforce repeatedly fails after each update",
           "expected": "Problem",
           "predicted": "Change",
-          "confidence": 0.4807
+          "confidence": 0.4732
         },
         {
           "text": "Multiple incidents of login failures seem related, please analyse the pattern",
           "expected": "Problem",
           "predicted": "Incident",
-          "confidence": 0.5805
+          "confidence": 0.5887
         },
         {
           "text": "We want to migrate our email from on-prem Exchange to Microsoft 365",
           "expected": "Change",
           "predicted": "Request",
-          "confidence": 0.5315
+          "confidence": 0.5381
         },
         {
           "text": "Add SSO login using Okta to our internal tools",
           "expected": "Change",
           "predicted": "Incident",
-          "confidence": 0.4929
+          "confidence": 0.5037
         }
       ]
     },
@@ -81,31 +87,31 @@
           "text": "Please set up a mailbox for the new intern",
           "expected": "Request",
           "predicted": "Change",
-          "confidence": 0.6908
+          "confidence": 0.6869
         },
         {
           "text": "Nobody in the office can reach the intranet",
           "expected": "Incident",
           "predicted": "Problem",
-          "confidence": 0.5366
+          "confidence": 0.5353
         },
         {
           "text": "The checkout API is throwing timeout errors for all users",
           "expected": "Incident",
           "predicted": "Problem",
-          "confidence": 0.4438
+          "confidence": 0.4362
         },
         {
           "text": "This is the fourth time the payroll export has failed this month",
           "expected": "Problem",
           "predicted": "Incident",
-          "confidence": 0.766
+          "confidence": 0.7662
         },
         {
           "text": "Reconfigure the load balancer to use round robin",
           "expected": "Change",
           "predicted": "Problem",
-          "confidence": 0.4493
+          "confidence": 0.4424
         }
       ]
     }
@@ -113,8 +119,8 @@
   "model_only": {
     "development": {
       "tickets": 48,
-      "accuracy": 0.5208,
-      "macro_f1": 0.5102,
+      "accuracy": 0.5,
+      "macro_f1": 0.48,
       "auto_accept_rate": 0.25,
       "auto_accept_precision": 0.8333,
       "errors": [
@@ -122,139 +128,145 @@
           "text": "send me last month's invoice",
           "expected": "Request",
           "predicted": "Problem",
-          "confidence": 0.55
+          "confidence": 0.5472
         },
         {
           "text": "I need access to the shared finance drive",
           "expected": "Request",
           "predicted": "Incident",
-          "confidence": 0.5673
+          "confidence": 0.5714
         },
         {
           "text": "please create an account for our new hire starting monday",
           "expected": "Request",
           "predicted": "Change",
-          "confidence": 0.7823
+          "confidence": 0.7806
         },
         {
           "text": "How do I export my project data to CSV?",
           "expected": "Request",
           "predicted": "Incident",
-          "confidence": 0.4849
+          "confidence": 0.4868
+        },
+        {
+          "text": "Requesting a license for Adobe Acrobat Pro for the marketing team",
+          "expected": "Request",
+          "predicted": "Change",
+          "confidence": 0.4254
         },
         {
           "text": "what are your support hours during the holidays?",
           "expected": "Request",
           "predicted": "Incident",
-          "confidence": 0.7581
+          "confidence": 0.7575
         },
         {
           "text": "Need a new laptop for the analyst joining next week",
           "expected": "Request",
           "predicted": "Change",
-          "confidence": 0.5012
+          "confidence": 0.4976
         },
         {
           "text": "please reset my password, I forgot it",
           "expected": "Request",
           "predicted": "Incident",
-          "confidence": 0.4295
+          "confidence": 0.4234
         },
         {
           "text": "We would like a quote for 50 additional user seats",
           "expected": "Request",
           "predicted": "Change",
-          "confidence": 0.6174
+          "confidence": 0.6122
         },
         {
           "text": "Printer on the 3rd floor is not working",
           "expected": "Incident",
           "predicted": "Problem",
-          "confidence": 0.6752
+          "confidence": 0.6766
         },
         {
           "text": "Our cloud storage sync failed and files are missing",
           "expected": "Incident",
           "predicted": "Problem",
-          "confidence": 0.7603
+          "confidence": 0.7592
         },
         {
           "text": "The server has crashed three times this week, please find the root cause",
           "expected": "Problem",
           "predicted": "Incident",
-          "confidence": 0.661
+          "confidence": 0.6565
         },
         {
           "text": "Recurring data sync failures between the CRM and the marketing platform",
           "expected": "Problem",
           "predicted": "Incident",
-          "confidence": 0.8237
+          "confidence": 0.8263
         },
         {
           "text": "Integration with Salesforce repeatedly fails after each update",
           "expected": "Problem",
           "predicted": "Change",
-          "confidence": 0.7333
+          "confidence": 0.7277
         },
         {
           "text": "Same memory leak keeps coming back on the analytics cluster",
           "expected": "Problem",
           "predicted": "Incident",
-          "confidence": 0.454
+          "confidence": 0.4532
         },
         {
           "text": "Users repeatedly report slow performance every Monday morning, need underlying cause",
           "expected": "Problem",
           "predicted": "Incident",
-          "confidence": 0.6509
+          "confidence": 0.6536
         },
         {
           "text": "Investment forecasts in the analytics tool are consistently inaccurate",
           "expected": "Problem",
           "predicted": "Incident",
-          "confidence": 0.7109
+          "confidence": 0.7043
         },
         {
           "text": "Multiple incidents of login failures seem related, please analyse the pattern",
           "expected": "Problem",
           "predicted": "Incident",
-          "confidence": 0.8481
+          "confidence": 0.8517
         },
         {
           "text": "Network latency issues keep recurring across several offices",
           "expected": "Problem",
           "predicted": "Incident",
-          "confidence": 0.6077
+          "confidence": 0.6084
         },
         {
           "text": "We want to migrate our email from on-prem Exchange to Microsoft 365",
           "expected": "Change",
           "predicted": "Request",
-          "confidence": 0.6659
+          "confidence": 0.6722
         },
         {
           "text": "Schedule a maintenance window to apply the security patches",
           "expected": "Change",
           "predicted": "Incident",
-          "confidence": 0.3773
+          "confidence": 0.374
         },
         {
           "text": "Change the default branch protection settings in our repository",
           "expected": "Change",
           "predicted": "Incident",
-          "confidence": 0.4473
+          "confidence": 0.4427
         },
         {
           "text": "Modify the backup schedule from weekly to daily",
           "expected": "Change",
           "predicted": "Incident",
-          "confidence": 0.4651
+          "confidence": 0.4652
         },
         {
           "text": "Add SSO login using Okta to our internal tools",
           "expected": "Change",
           "predicted": "Incident",
-          "confidence": 0.7134
+          "confidence": 0.72
         }
       ]
     },
@@ -269,85 +281,85 @@
           "text": "I'd like read-only permissions on the sales dashboard",
           "expected": "Request",
           "predicted": "Change",
-          "confidence": 0.3644
+          "confidence": 0.3686
         },
         {
           "text": "Where can I download the desktop client?",
           "expected": "Request",
           "predicted": "Incident",
-          "confidence": 0.5674
+          "confidence": 0.5653
         },
         {
           "text": "Please set up a mailbox for the new intern",
           "expected": "Request",
           "predicted": "Change",
-          "confidence": 0.8688
+          "confidence": 0.8671
         },
         {
           "text": "Nobody in the office can reach the intranet",
           "expected": "Incident",
           "predicted": "Problem",
-          "confidence": 0.5366
+          "confidence": 0.5353
         },
         {
           "text": "The checkout API is throwing timeout errors for all users",
           "expected": "Incident",
           "predicted": "Problem",
-          "confidence": 0.4438
+          "confidence": 0.4362
         },
         {
           "text": "Shared calendar is not loading in Teams",
           "expected": "Incident",
           "predicted": "Problem",
-          "confidence": 0.5704
+          "confidence": 0.5601
         },
         {
           "text": "Our file server is down and the team cannot open documents",
           "expected": "Incident",
           "predicted": "Problem",
-          "confidence": 0.5485
+          "confidence": 0.5444
         },
         {
           "text": "Disk space alerts on the build server happen again every few days, why?",
           "expected": "Problem",
           "predicted": "Incident",
-          "confidence": 0.3706
+          "confidence": 0.368
         },
         {
           "text": "This is the fourth time the payroll export has failed this month",
           "expected": "Problem",
           "predicted": "Incident",
-          "confidence": 0.9277
+          "confidence": 0.9275
         },
         {
           "text": "Several customers keep seeing wrong totals on their invoices",
           "expected": "Problem",
           "predicted": "Incident",
-          "confidence": 0.6844
+          "confidence": 0.6833
         },
         {
           "text": "Investigate why the nightly ETL job intermittently stalls",
           "expected": "Problem",
           "predicted": "Incident",
-          "confidence": 0.6423
+          "confidence": 0.6405
         },
         {
           "text": "Frequent outages of the guest wifi need a root cause analysis",
           "expected": "Problem",
           "predicted": "Incident",
-          "confidence": 0.6244
+          "confidence": 0.6239
         },
         {
           "text": "Reconfigure the load balancer to use round robin",
           "expected": "Change",
           "predicted": "Problem",
-          "confidence": 0.5115
+          "confidence": 0.5039
         },
         {
           "text": "We plan to decommission the old file server next quarter",
           "expected": "Change",
           "predicted": "Problem",
-          "confidence": 0.4021
+          "confidence": 0.3955
         },
         {
           "text": "Enable audit logging on the production database",

@@ -1316,7 +1316,7 @@
       const tBtn = document.getElementById('btnModelTransformer');
       const hasTransformer = availableModels.includes('transformer');
       tBtn.disabled = !hasTransformer;
-      tBtn.title = hasTransformer ? '' : 'DistilBERT needs more than 512 MB RAM and is not deployed on this server';
+      tBtn.title = hasTransformer ? '' : 'DistilBERT + LoRA is served by the Docker image (Dockerfile.transformer); this free-tier server runs the TF-IDF model';
       pickModel(availableModels.includes(meta.default_model) ? meta.default_model : (availableModels[0] || 'baseline'));
       const gate = Math.round((meta.confidence_threshold || 0.8) * 100);
       document.getElementById('textGate').textContent = `Confidence Gate: ${gate}%`;

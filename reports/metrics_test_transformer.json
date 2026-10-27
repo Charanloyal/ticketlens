@@ -1,79 +1,233 @@
 {
-  "model_name": "DistilBERT (LoRA / PEFT)",
-  "accuracy": 0.6133,
-  "macro_f1": 0.3724,
-  "weighted_f1": 0.5009,
+  "model_name": "DistilBERT + LoRA (PyTorch/PEFT)",
+  "test_samples": 3563,
+  "accuracy": 0.792,
+  "macro_f1": 0.779,
+  "weighted_f1": 0.7777,
+  "classification_report": {
+    "Change": {
+      "precision": 0.935064935064935,
+      "recall": 0.9574468085106383,
+      "f1-score": 0.9461235216819974,
+      "support": 376.0
+    },
+    "Incident": {
+      "precision": 0.7114928909952607,
+      "recall": 0.8487632508833922,
+      "f1-score": 0.7740895907186593,
+      "support": 1415.0
+    },
+    "Problem": {
+      "precision": 0.5391304347826087,
+      "recall": 0.33513513513513515,
+      "f1-score": 0.41333333333333333,
+      "support": 740.0
+    },
+    "Request": {
+      "precision": 0.983495145631068,
+      "recall": 0.9815891472868217,
+      "f1-score": 0.9825412221144519,
+      "support": 1032.0
+    },
+    "accuracy": 0.7920291888857705,
+    "macro avg": {
+      "precision": 0.7922958516184682,
+      "recall": 0.780733585453997,
+      "f1-score": 0.7790219169621105,
+      "support": 3563.0
+    },
+    "weighted avg": {
+      "precision": 0.7780719529534388,
+      "recall": 0.7920291888857705,
+      "f1-score": 0.7776953193679806,
+      "support": 3563.0
+    }
+  },
   "confusion_matrix": [
     [
-      0,
+      360,
+      1,
       4,
-      0,
+      11
+    ],
+    [
+      2,
+      1201,
+      208,
       4
     ],
     [
-      0,
-      29,
-      0,
-      1
-    ],
-    [
-      0,
-      16,
-      0,
-      0
-    ],
-    [
-      0,
       4,
+      486,
+      248,
+      2
+    ],
+    [
+      19,
       0,
-      17
+      0,
+      1013
     ]
   ],
-  "classification_report": {
-    "Change": {
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1-score": 0.0,
-      "support": 8.0
+  "threshold_analysis": [
+    {
+      "threshold": 0.5,
+      "coverage": 0.9978,
+      "precision": 0.793,
+      "auto_accepted": 3555
     },
-    "Incident": {
-      "precision": 0.5471698113207547,
-      "recall": 0.9666666666666667,
-      "f1-score": 0.6987951807228916,
-      "support": 30.0
+    {
+      "threshold": 0.6,
+      "coverage": 0.826,
+      "precision": 0.8502,
+      "auto_accepted": 2943
     },
-    "Problem": {
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1-score": 0.0,
-      "support": 16.0
+    {
+      "threshold": 0.7,
+      "coverage": 0.6758,
+      "precision": 0.8999,
+      "auto_accepted": 2408
     },
-    "Request": {
-      "precision": 0.7727272727272727,
-      "recall": 0.8095238095238095,
-      "f1-score": 0.7906976744186046,
-      "support": 21.0
+    {
+      "threshold": 0.8,
+      "coverage": 0.5484,
+      "precision": 0.9442,
+      "auto_accepted": 1954
     },
-    "accuracy": 0.6133333333333333,
-    "macro avg": {
-      "precision": 0.3299742710120068,
-      "recall": 0.444047619047619,
-      "f1-score": 0.372373213785374,
-      "support": 75.0
-    },
-    "weighted avg": {
-      "precision": 0.4352315608919382,
-      "recall": 0.6133333333333333,
-      "f1-score": 0.5009134211263659,
-      "support": 75.0
+    {
+      "threshold": 0.9,
+      "coverage": 0.442,
+      "precision": 0.9778,
+      "auto_accepted": 1575
     }
+  ],
+  "length_buckets": [
+    {
+      "bucket": "< 50 words",
+      "tickets": 1423,
+      "accuracy": 0.7772,
+      "macro_f1": 0.7817
+    },
+    {
+      "bucket": "50-99 words",
+      "tickets": 1838,
+      "accuracy": 0.8036,
+      "macro_f1": 0.7757
+    },
+    {
+      "bucket": "100-199 words",
+      "tickets": 296,
+      "accuracy": 0.7905,
+      "macro_f1": 0.7718
+    },
+    {
+      "bucket": ">= 200 words",
+      "tickets": 6,
+      "accuracy": 0.8333,
+      "macro_f1": 0.5
+    }
+  ],
+  "error_analysis": {
+    "errors": 741,
+    "error_rate": 0.208,
+    "top_confusions": [
+      {
+        "true": "Problem",
+        "predicted": "Incident",
+        "count": 486,
+        "share_of_errors": 0.6559
+      },
+      {
+        "true": "Incident",
+        "predicted": "Problem",
+        "count": 208,
+        "share_of_errors": 0.2807
+      },
+      {
+        "true": "Request",
+        "predicted": "Change",
+        "count": 19,
+        "share_of_errors": 0.0256
+      },
+      {
+        "true": "Change",
+        "predicted": "Request",
+        "count": 11,
+        "share_of_errors": 0.0148
+      },
+      {
+        "true": "Change",
+        "predicted": "Problem",
+        "count": 4,
+        "share_of_errors": 0.0054
+      },
+      {
+        "true": "Incident",
+        "predicted": "Request",
+        "count": 4,
+        "share_of_errors": 0.0054
+      }
+    ],
+    "most_confident_errors": [
+      {
+        "true": "Request",
+        "predicted": "Change",
+        "confidence": 0.9994,
+        "text": "Enhance Ubiquiti UniFi Dream Machine for better digital marketing strategies and improved network performance and security."
+      },
+      {
+        "true": "Request",
+        "predicted": "Change",
+        "confidence": 0.9894,
+        "text": "Protocols for Ensuring Medical Data Security  We highly value the security of medical data and advise the use of encryption and two-factor authentication to safeguard it. Additionally, we recommend maintaining regular up..."
+      },
+      {
+        "true": "Change",
+        "predicted": "Request",
+        "confidence": 0.989,
+        "text": "Support for Enhancing Data Analytics with Moodle and Azure  I am contacting you to explore ways of enhancing data analytics integration with Moodle and Azure to derive investment insights. Could you share more details on..."
+      },
+      {
+        "true": "Request",
+        "predicted": "Change",
+        "confidence": 0.9824,
+        "text": "Enhance digital strategies by integrating Jenkins and Redis to promote brand development."
+      },
+      {
+        "true": "Problem",
+        "predicted": "Incident",
+        "confidence": 0.9789,
+        "text": "Concern Regarding Data Integration System  Faced issues with the data integration system, which has impacted the performance of our investment analytics tools. The disruption might be due to recent software updates or co..."
+      },
+      {
+        "true": "Request",
+        "predicted": "Change",
+        "confidence": 0.9754,
+        "text": "Improved Support for Shopify KNIME Marketing Analytics Integration  Hello, we are seeking assistance with integrating Shopify and KNIME for enhanced marketing analytics. We would like to know the detailed steps involved ..."
+      }
+    ]
   },
   "latency": {
-    "mean_ms": 30.34,
-    "std_ms": 11.59,
-    "p50_ms": 27.5,
-    "p95_ms": 49.51,
-    "p99_ms": 52.08,
-    "throughput_samples_per_sec": 32.96
-  }
+    "mean_ms": 57.37,
+    "p50_ms": 56.66,
+    "p95_ms": 82.47,
+    "p99_ms": 83.96,
+    "throughput_samples_per_sec": 17.43
+  },
+  "handwritten": {
+    "tickets": 24,
+    "accuracy": 0.625,
+    "macro_f1": 0.6405,
+    "holdout": {
+      "tickets": 24,
+      "accuracy": 0.625,
+      "macro_f1": 0.6405
+    },
+    "development": {
+      "tickets": 48,
+      "accuracy": 0.7083,
+      "macro_f1": 0.7266
+    }
+  },
+  "train_samples": 7000
 }

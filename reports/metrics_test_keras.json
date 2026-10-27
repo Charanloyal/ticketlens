@@ -1,0 +1,233 @@
+{
+  "model_name": "Keras CNN (TensorFlow)",
+  "test_samples": 3563,
+  "accuracy": 0.7884,
+  "macro_f1": 0.8095,
+  "weighted_f1": 0.7932,
+  "classification_report": {
+    "Change": {
+      "precision": 0.9536784741144414,
+      "recall": 0.9308510638297872,
+      "f1-score": 0.9421265141318977,
+      "support": 376.0
+    },
+    "Incident": {
+      "precision": 0.8089788732394366,
+      "recall": 0.649469964664311,
+      "f1-score": 0.7205017640141121,
+      "support": 1415.0
+    },
+    "Problem": {
+      "precision": 0.5127701375245579,
+      "recall": 0.7054054054054054,
+      "f1-score": 0.5938566552901023,
+      "support": 740.0
+    },
+    "Request": {
+      "precision": 0.9769673704414588,
+      "recall": 0.9864341085271318,
+      "f1-score": 0.9816779170684667,
+      "support": 1032.0
+    },
+    "accuracy": 0.7883805781644682,
+    "macro avg": {
+      "precision": 0.8130987138299737,
+      "recall": 0.8180401356066589,
+      "f1-score": 0.8095407126261448,
+      "support": 3563.0
+    },
+    "weighted avg": {
+      "precision": 0.8113860342308704,
+      "recall": 0.7883805781644682,
+      "f1-score": 0.793234662004742,
+      "support": 3563.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      350,
+      4,
+      3,
+      19
+    ],
+    [
+      4,
+      919,
+      491,
+      1
+    ],
+    [
+      1,
+      213,
+      522,
+      4
+    ],
+    [
+      12,
+      0,
+      2,
+      1018
+    ]
+  ],
+  "threshold_analysis": [
+    {
+      "threshold": 0.5,
+      "coverage": 0.9958,
+      "precision": 0.7892,
+      "auto_accepted": 3548
+    },
+    {
+      "threshold": 0.6,
+      "coverage": 0.8653,
+      "precision": 0.8239,
+      "auto_accepted": 3083
+    },
+    {
+      "threshold": 0.7,
+      "coverage": 0.7345,
+      "precision": 0.8678,
+      "auto_accepted": 2617
+    },
+    {
+      "threshold": 0.8,
+      "coverage": 0.6076,
+      "precision": 0.9173,
+      "auto_accepted": 2165
+    },
+    {
+      "threshold": 0.9,
+      "coverage": 0.4701,
+      "precision": 0.9678,
+      "auto_accepted": 1675
+    }
+  ],
+  "length_buckets": [
+    {
+      "bucket": "< 50 words",
+      "tickets": 1423,
+      "accuracy": 0.7723,
+      "macro_f1": 0.8039
+    },
+    {
+      "bucket": "50-99 words",
+      "tickets": 1838,
+      "accuracy": 0.8025,
+      "macro_f1": 0.8174
+    },
+    {
+      "bucket": "100-199 words",
+      "tickets": 296,
+      "accuracy": 0.7736,
+      "macro_f1": 0.7774
+    },
+    {
+      "bucket": ">= 200 words",
+      "tickets": 6,
+      "accuracy": 1.0,
+      "macro_f1": 1.0
+    }
+  ],
+  "error_analysis": {
+    "errors": 754,
+    "error_rate": 0.2116,
+    "top_confusions": [
+      {
+        "true": "Incident",
+        "predicted": "Problem",
+        "count": 491,
+        "share_of_errors": 0.6512
+      },
+      {
+        "true": "Problem",
+        "predicted": "Incident",
+        "count": 213,
+        "share_of_errors": 0.2825
+      },
+      {
+        "true": "Change",
+        "predicted": "Request",
+        "count": 19,
+        "share_of_errors": 0.0252
+      },
+      {
+        "true": "Request",
+        "predicted": "Change",
+        "count": 12,
+        "share_of_errors": 0.0159
+      },
+      {
+        "true": "Change",
+        "predicted": "Incident",
+        "count": 4,
+        "share_of_errors": 0.0053
+      },
+      {
+        "true": "Problem",
+        "predicted": "Request",
+        "count": 4,
+        "share_of_errors": 0.0053
+      }
+    ],
+    "most_confident_errors": [
+      {
+        "true": "Change",
+        "predicted": "Request",
+        "confidence": 1.0,
+        "text": "Enhance Investment Strategies with Machine Learning  Respected customer support, I am reaching out to seek information on leveraging machine learning for optimizing investment portfolios through real-time market data and..."
+      },
+      {
+        "true": "Change",
+        "predicted": "Request",
+        "confidence": 0.9981,
+        "text": "Support Required for Data Analytics Integration with JIRA and Zoho Books  I am contacting you to seek support for integrating data analytics with JIRA and Zoho Books to optimize investments on Ubuntu systems. I need deta..."
+      },
+      {
+        "true": "Problem",
+        "predicted": "Request",
+        "confidence": 0.997,
+        "text": "Question About Marketing Agency Software Compatibility  Dear Support Team,\\n\\nI hope this message reaches you well. I am reaching out to ask about the compatibility of your products with the specific needs of marketing a..."
+      },
+      {
+        "true": "Change",
+        "predicted": "Request",
+        "confidence": 0.9955,
+        "text": "Enhancement of Digital Infrastructure  Hello Customer Support, I'm reaching out to explore the possibilities of upgrading our digital infrastructure to support our brand's growth and optimize our marketing strategy. We a..."
+      },
+      {
+        "true": "Request",
+        "predicted": "Change",
+        "confidence": 0.9911,
+        "text": "Protocols for Ensuring Medical Data Security  We highly value the security of medical data and advise the use of encryption and two-factor authentication to safeguard it. Additionally, we recommend maintaining regular up..."
+      },
+      {
+        "true": "Problem",
+        "predicted": "Incident",
+        "confidence": 0.9876,
+        "text": "Device Malfunction Threatening Data Security  A healthcare provider encountered several device malfunctions that jeopardized the security of medical data. The devices were rebooted and their software was updated."
+      }
+    ]
+  },
+  "latency": {
+    "mean_ms": 7.74,
+    "p50_ms": 7.71,
+    "p95_ms": 7.9,
+    "p99_ms": 8.02,
+    "throughput_samples_per_sec": 129.24
+  },
+  "handwritten": {
+    "tickets": 24,
+    "accuracy": 0.4583,
+    "macro_f1": 0.4429,
+    "holdout": {
+      "tickets": 24,
+      "accuracy": 0.4583,
+      "macro_f1": 0.4429
+    },
+    "development": {
+      "tickets": 48,
+      "accuracy": 0.3958,
+      "macro_f1": 0.4032
+    }
+  },
+  "train_samples": 7000
+}

@@ -11,29 +11,29 @@
     "Problem",
     "Request"
   ],
-  "training_duration_seconds": 8.5928,
-  "validation_accuracy": 0.8554,
-  "validation_macro_f1": 0.8622,
-  "validation_weighted_f1": 0.8554,
-  "latency_p50_ms": 0.566,
-  "latency_p95_ms": 1.054,
+  "training_duration_seconds": 10.4988,
+  "validation_accuracy": 0.8557,
+  "validation_macro_f1": 0.8625,
+  "validation_weighted_f1": 0.8556,
+  "latency_p50_ms": 0.763,
+  "latency_p95_ms": 0.85,
   "classification_report": {
     "Change": {
-      "precision": 0.9603174603174603,
-      "recall": 0.968,
-      "f1-score": 0.9641434262948207,
+      "precision": 0.9604221635883905,
+      "recall": 0.9706666666666667,
+      "f1-score": 0.9655172413793104,
       "support": 375.0
     },
     "Incident": {
-      "precision": 0.8267326732673267,
-      "recall": 0.826148409893993,
-      "f1-score": 0.8264404383174266,
+      "precision": 0.8268551236749117,
+      "recall": 0.8268551236749117,
+      "f1-score": 0.8268551236749117,
       "support": 1415.0
     },
     "Problem": {
-      "precision": 0.668918918918919,
-      "recall": 0.668918918918919,
-      "f1-score": 0.668918918918919,
+      "precision": 0.6693766937669376,
+      "recall": 0.6675675675675675,
+      "f1-score": 0.6684709066305818,
       "support": 740.0
     },
     "Request": {
@@ -42,17 +42,17 @@
       "f1-score": 0.9893307468477207,
       "support": 1032.0
     },
-    "accuracy": 0.8554183043234138,
+    "accuracy": 0.8556990454800674,
     "macro avg": {
-      "precision": 0.8615650786599071,
-      "recall": 0.8628598554590419,
-      "f1-score": 0.8622083825947218,
+      "precision": 0.8617363107915404,
+      "recall": 0.8633653627331004,
+      "f1-score": 0.8625435046331312,
       "support": 3562.0
     },
     "weighted avg": {
-      "precision": 0.8553976313353697,
-      "recall": 0.8554183043234138,
-      "f1-score": 0.8554060459928591,
+      "precision": 0.8555523995669433,
+      "recall": 0.8556990454800674,
+      "f1-score": 0.8556223377795394,
       "support": 3562.0
     }
   }

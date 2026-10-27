@@ -1,78 +1,90 @@
 {
   "model_type": "DistilBERT (PEFT / LoRA)",
   "pretrained_backbone": "distilbert/distilbert-base-uncased",
-  "mode": "quick",
+  "mode": "full",
   "device": "cpu",
   "use_peft": true,
-  "epochs": 2,
-  "train_samples": 350,
-  "val_samples": 75,
-  "test_samples": 75,
+  "epochs": 3,
+  "epochs_run": 3,
+  "best_epoch": 2,
+  "learning_rate": 0.0003,
+  "lora_r": 8,
+  "max_length": 128,
+  "train_samples": 7000,
+  "val_samples": 1500,
+  "test_samples": 3563,
   "classes": [
     "Change",
     "Incident",
     "Problem",
     "Request"
   ],
-  "training_duration_seconds": 94.079,
-  "validation_accuracy": 0.6667,
-  "validation_macro_f1": 0.3964,
-  "validation_weighted_f1": 0.5471,
-  "latency_p50_ms": 31.916,
-  "latency_p95_ms": 49.455,
+  "training_duration_seconds": 3555.301,
+  "validation_accuracy": 0.7987,
+  "validation_macro_f1": 0.7922,
+  "validation_weighted_f1": 0.788,
+  "latency_p50_ms": 59.679,
+  "latency_p95_ms": 82.922,
   "training_history": [
     {
       "epoch": 1,
-      "train_loss": 1.335,
-      "val_loss": 1.2598,
-      "val_acc": 0.6667,
-      "val_macro_f1": 0.3964
+      "train_loss": 0.5894,
+      "val_loss": 0.4093,
+      "val_acc": 0.792,
+      "val_macro_f1": 0.7893
     },
     {
       "epoch": 2,
-      "train_loss": 1.2586,
-      "val_loss": 1.2221,
-      "val_acc": 0.6667,
-      "val_macro_f1": 0.3964
+      "train_loss": 0.411,
+      "val_loss": 0.3913,
+      "val_acc": 0.7987,
+      "val_macro_f1": 0.7922
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.3722,
+      "val_loss": 0.3961,
+      "val_acc": 0.794,
+      "val_macro_f1": 0.7832
     }
   ],
   "classification_report": {
     "Change": {
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1-score": 0.0,
-      "support": 8.0
+      "precision": 0.9444444444444444,
+      "recall": 0.9683544303797469,
+      "f1-score": 0.95625,
+      "support": 158.0
     },
     "Incident": {
-      "precision": 0.625,
-      "recall": 1.0,
-      "f1-score": 0.7692307692307693,
-      "support": 30.0
+      "precision": 0.7225433526011561,
+      "recall": 0.8389261744966443,
+      "f1-score": 0.7763975155279503,
+      "support": 596.0
     },
     "Problem": {
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1-score": 0.0,
-      "support": 15.0
+      "precision": 0.5560747663551402,
+      "recall": 0.3814102564102564,
+      "f1-score": 0.4524714828897338,
+      "support": 312.0
     },
     "Request": {
-      "precision": 0.7407407407407407,
-      "recall": 0.9090909090909091,
-      "f1-score": 0.8163265306122449,
-      "support": 22.0
+      "precision": 0.9861111111111112,
+      "recall": 0.9815668202764977,
+      "f1-score": 0.9838337182448037,
+      "support": 434.0
     },
-    "accuracy": 0.6666666666666666,
+    "accuracy": 0.7986666666666666,
     "macro avg": {
-      "precision": 0.3414351851851852,
-      "recall": 0.4772727272727273,
-      "f1-score": 0.3963893249607535,
-      "support": 75.0
+      "precision": 0.802293418627963,
+      "recall": 0.7925644203907863,
+      "f1-score": 0.792238179165622,
+      "support": 1500.0
     },
     "weighted avg": {
-      "precision": 0.4672839506172839,
-      "recall": 0.6666666666666666,
-      "f1-score": 0.5471480900052328,
-      "support": 75.0
+      "precision": 0.7875504064650248,
+      "recall": 0.7986666666666666,
+      "f1-score": 0.787983570423,
+      "support": 1500.0
     }
   }
 }

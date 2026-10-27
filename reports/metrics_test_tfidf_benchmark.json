@@ -1,0 +1,233 @@
+{
+  "model_name": "TF-IDF + Logistic Regression",
+  "test_samples": 3563,
+  "accuracy": 0.8266,
+  "macro_f1": 0.8352,
+  "weighted_f1": 0.827,
+  "classification_report": {
+    "Change": {
+      "precision": 0.9522546419098143,
+      "recall": 0.9547872340425532,
+      "f1-score": 0.953519256308101,
+      "support": 376.0
+    },
+    "Incident": {
+      "precision": 0.7966954022988506,
+      "recall": 0.7837455830388692,
+      "f1-score": 0.790167438546491,
+      "support": 1415.0
+    },
+    "Problem": {
+      "precision": 0.6018396846254928,
+      "recall": 0.6189189189189189,
+      "f1-score": 0.6102598267821452,
+      "support": 740.0
+    },
+    "Request": {
+      "precision": 0.9864472410454985,
+      "recall": 0.9874031007751938,
+      "f1-score": 0.9869249394673123,
+      "support": 1032.0
+    },
+    "accuracy": 0.8265506595565535,
+    "macro avg": {
+      "precision": 0.8343092424699141,
+      "recall": 0.8362137091938837,
+      "f1-score": 0.8352178652760123,
+      "support": 3563.0
+    },
+    "weighted avg": {
+      "precision": 0.8276022057234866,
+      "recall": 0.8265506595565535,
+      "f1-score": 0.8270303045928106,
+      "support": 3563.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      359,
+      4,
+      0,
+      13
+    ],
+    [
+      3,
+      1109,
+      303,
+      0
+    ],
+    [
+      2,
+      279,
+      458,
+      1
+    ],
+    [
+      13,
+      0,
+      0,
+      1019
+    ]
+  ],
+  "threshold_analysis": [
+    {
+      "threshold": 0.5,
+      "coverage": 0.9686,
+      "precision": 0.8369,
+      "auto_accepted": 3451
+    },
+    {
+      "threshold": 0.6,
+      "coverage": 0.8237,
+      "precision": 0.8773,
+      "auto_accepted": 2935
+    },
+    {
+      "threshold": 0.7,
+      "coverage": 0.6845,
+      "precision": 0.9205,
+      "auto_accepted": 2439
+    },
+    {
+      "threshold": 0.8,
+      "coverage": 0.5262,
+      "precision": 0.9595,
+      "auto_accepted": 1875
+    },
+    {
+      "threshold": 0.9,
+      "coverage": 0.3615,
+      "precision": 0.9876,
+      "auto_accepted": 1288
+    }
+  ],
+  "length_buckets": [
+    {
+      "bucket": "< 50 words",
+      "tickets": 1423,
+      "accuracy": 0.8313,
+      "macro_f1": 0.8483
+    },
+    {
+      "bucket": "50-99 words",
+      "tickets": 1838,
+      "accuracy": 0.8341,
+      "macro_f1": 0.836
+    },
+    {
+      "bucket": "100-199 words",
+      "tickets": 296,
+      "accuracy": 0.7568,
+      "macro_f1": 0.7578
+    },
+    {
+      "bucket": ">= 200 words",
+      "tickets": 6,
+      "accuracy": 0.8333,
+      "macro_f1": 0.5
+    }
+  ],
+  "error_analysis": {
+    "errors": 618,
+    "error_rate": 0.1734,
+    "top_confusions": [
+      {
+        "true": "Incident",
+        "predicted": "Problem",
+        "count": 303,
+        "share_of_errors": 0.4903
+      },
+      {
+        "true": "Problem",
+        "predicted": "Incident",
+        "count": 279,
+        "share_of_errors": 0.4515
+      },
+      {
+        "true": "Change",
+        "predicted": "Request",
+        "count": 13,
+        "share_of_errors": 0.021
+      },
+      {
+        "true": "Request",
+        "predicted": "Change",
+        "count": 13,
+        "share_of_errors": 0.021
+      },
+      {
+        "true": "Change",
+        "predicted": "Incident",
+        "count": 4,
+        "share_of_errors": 0.0065
+      },
+      {
+        "true": "Incident",
+        "predicted": "Change",
+        "count": 3,
+        "share_of_errors": 0.0049
+      }
+    ],
+    "most_confident_errors": [
+      {
+        "true": "Problem",
+        "predicted": "Incident",
+        "confidence": 0.9698,
+        "text": "Report of Data Security Concern  Dear Customer Support,<br><br>The healthcare organization encountered data security problems impacting several systems, possibly due to recent configuration updates. Rebooting affected de..."
+      },
+      {
+        "true": "Problem",
+        "predicted": "Incident",
+        "confidence": 0.9482,
+        "text": "Report of Data Security Concerns  Dear Customer Support,<br><br>Our healthcare organization has encountered data security challenges impacting several systems, likely due to recent configuration updates. Rebooting affect..."
+      },
+      {
+        "true": "Change",
+        "predicted": "Request",
+        "confidence": 0.9391,
+        "text": "Enhance Investment Strategies with Machine Learning  Respected customer support, I am reaching out to seek information on leveraging machine learning for optimizing investment portfolios through real-time market data and..."
+      },
+      {
+        "true": "Incident",
+        "predicted": "Problem",
+        "confidence": 0.9383,
+        "text": "Customer Concern  A healthcare provider faced unauthorized access attempts to medical data, possibly due to outdated security protocols. They have attempted to update firewalls and are conducting employee training on dat..."
+      },
+      {
+        "true": "Problem",
+        "predicted": "Incident",
+        "confidence": 0.9342,
+        "text": "Identified Error in Payment Processing System  We are encountering problems with the billing system, which are hindering our ability to process payments. This may be related to a recent software update. We have attempted..."
+      },
+      {
+        "true": "Problem",
+        "predicted": "Incident",
+        "confidence": 0.9268,
+        "text": "Technical Difficulty  The marketing agency's website has been crashing frequently during traffic spikes, probably due to inadequate server capacity. Attempts to restart the server and clear the cache have not resolved th..."
+      }
+    ]
+  },
+  "latency": {
+    "mean_ms": 0.77,
+    "p50_ms": 0.78,
+    "p95_ms": 0.83,
+    "p99_ms": 0.87,
+    "throughput_samples_per_sec": 1291.5
+  },
+  "handwritten": {
+    "tickets": 24,
+    "accuracy": 0.3333,
+    "macro_f1": 0.3616,
+    "holdout": {
+      "tickets": 24,
+      "accuracy": 0.3333,
+      "macro_f1": 0.3616
+    },
+    "development": {
+      "tickets": 48,
+      "accuracy": 0.4792,
+      "macro_f1": 0.4603
+    }
+  },
+  "train_samples": 7000
+}

@@ -6,22 +6,22 @@ This report details feature attribution, SHAP explainability, dataset label repr
 
 ## 2. Dataset Distribution & Bias Audit
 
-- **Total Tickets Audited:** 350
-- **Class Imbalance Ratio (Majority / Minority):** 3.86:1
+- **Total Tickets Audited:** 23747
+- **Class Imbalance Ratio (Majority / Minority):** 3.77:1
 - **Class Distribution:**
-  - **Incident:** 139 samples (39.7%)
-  - **Request:** 102 samples (29.1%)
-  - **Problem:** 73 samples (20.9%)
-  - **Change:** 36 samples (10.3%)
+  - **Incident:** 9433 samples (39.7%)
+  - **Request:** 6879 samples (29.0%)
+  - **Problem:** 4932 samples (20.8%)
+  - **Change:** 2503 samples (10.5%)
 
 ### Ticket Length Profile by Category (Words)
 
 | Category | Mean Word Count | Median Word Count | Min Words | Max Words |
 | :--- | :---: | :---: | :---: | :---: |
-| Incident | 57.2 | 53 | 7 | 167 |
-| Request | 60.7 | 60 | 8 | 257 |
-| Problem | 57.9 | 53 | 7 | 147 |
-| Change | 73.0 | 73 | 11 | 163 |
+| Incident | 59.9 | 58 | 2 | 235 |
+| Request | 62.5 | 64 | 6 | 257 |
+| Problem | 59.2 | 55 | 4 | 276 |
+| Change | 66.1 | 72 | 3 | 247 |
 
 ## 3. Feature Importance & SHAP Attribution
 
@@ -29,31 +29,31 @@ Top driving n-gram features identified for each IT service category via linear a
 
 ### Category: `Change`
 **Top Positive Driving Features (TF-IDF Weights):**
-`request` (+1.2619), `improve` (+1.2049), `update` (+1.1665), `an update` (+1.1442), `enhance` (+0.9481), `requesting` (+0.923)
+`update` (+11.1404), `enhance` (+10.5704), `improve` (+10.5524), `revise` (+8.0808), `boost` (+7.3086), `enhancement` (+7.2992)
 
 **Top SHAP Attributions (|SHAP| impact):**
-`for` (0.02774), `request` (0.02501), `problem` (0.01982), `an` (0.01978), `we` (0.01832), `our` (0.0169)
+`problem` (0.13351), `breach` (0.12747), `issue` (0.11658), `updating` (0.11576), `update` (0.11124), `urgent` (0.11007)
 
 ### Category: `Incident`
 **Top Positive Driving Features (TF-IDF Weights):**
-`issue` (+0.9246), `problem` (+0.8695), `system` (+0.8584), `have` (+0.6844), `restarting` (+0.6715), `software` (+0.6629)
+`problem` (+6.2423), `incident` (+6.1783), `breach` (+5.6523), `issue` (+5.3706), `has` (+5.0011), `issues` (+4.5704)
 
 **Top SHAP Attributions (|SHAP| impact):**
-`for` (0.02948), `problem` (0.02678), `issue` (0.02564), `medical` (0.02421), `have` (0.0235), `you` (0.02178)
+`breach` (0.16815), `issue` (0.15655), `problem` (0.15215), `have` (0.11351), `issues` (0.10557), `incident` (0.09492)
 
 ### Category: `Problem`
 **Top Positive Driving Features (TF-IDF Weights):**
-`issues` (+0.7972), `due` (+0.7545), `due to` (+0.7545), `been` (+0.7352), `unauthorized` (+0.6521), `the server` (+0.6516)
+`problem` (+5.9437), `facing` (+5.7914), `issue` (+5.3167), `issues` (+4.58), `problem with` (+4.5201), `despite` (+3.7879)
 
 **Top SHAP Attributions (|SHAP| impact):**
-`for` (0.02852), `issues` (0.02166), `been` (0.02019), `might` (0.01926), `due` (0.01817), `due to` (0.01817)
+`issue` (0.15498), `problem` (0.14487), `issues` (0.10579), `for` (0.10026), `breach` (0.09117), `problems` (0.07815)
 
 ### Category: `Request`
 **Top Positive Driving Features (TF-IDF Weights):**
-`information on` (+1.0146), `on` (+1.0141), `information` (+0.9874), `for` (+0.9501), `could you` (+0.8975), `brand` (+0.8334)
+`for` (+6.2853), `details` (+6.0948), `strategies` (+5.3317), `integrating` (+5.1867), `guidance` (+5.0588), `information` (+4.8044)
 
 **Top SHAP Attributions (|SHAP| impact):**
-`on` (0.03368), `for` (0.03026), `about` (0.02465), `have` (0.02435), `you` (0.02377), `we` (0.02306)
+`issue` (0.19495), `problem` (0.16351), `issues` (0.13757), `breach` (0.13186), `for` (0.12018), `problems` (0.10617)
 
 ## 4. Privacy, PII & Responsible AI Considerations
 

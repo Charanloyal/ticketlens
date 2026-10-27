@@ -2,8 +2,8 @@
 #
 # The LoRA adapter is downloaded from the "models" GitHub release published by the Benchmark
 # workflow (.github/workflows/benchmark.yml), and the DistilBERT base weights are baked into the
-# image so the container runs fully offline. Needs ~1 GB RAM (not suitable for Render's free plan,
-# which serves the TF-IDF image from ./Dockerfile instead).
+# image so the container runs fully offline. Uses ~430 MB RAM at runtime (measured in CI), too close to
+# Render's 512 MB free-plan limit under load, so Render serves the TF-IDF image from ./Dockerfile instead.
 #
 #   docker build -f Dockerfile.transformer -t ticketlens:transformer .
 #   docker run -p 8000:8000 ticketlens:transformer

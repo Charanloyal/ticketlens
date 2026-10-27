@@ -1,6 +1,6 @@
 {
   "dataset_name": "Tobi-Bueck/customer-support-tickets",
-  "test_samples_count": 75,
+  "test_samples_count": 3563,
   "classes": [
     "Change",
     "Incident",
@@ -8,162 +8,1169 @@
     "Request"
   ],
   "models": {
-    "baseline": {
+    "tfidf_benchmark": {
       "model_name": "TF-IDF + Logistic Regression",
-      "accuracy": 0.7467,
-      "macro_f1": 0.6709,
-      "weighted_f1": 0.7219,
-      "confusion_matrix": [
-        [
-          4,
-          0,
-          1,
-          3
-        ],
-        [
-          0,
-          28,
-          2,
-          0
-        ],
-        [
-          0,
-          11,
-          5,
-          0
-        ],
-        [
-          2,
-          0,
-          0,
-          19
-        ]
-      ],
+      "test_samples": 3563,
+      "accuracy": 0.8266,
+      "macro_f1": 0.8352,
+      "weighted_f1": 0.827,
       "classification_report": {
         "Change": {
-          "precision": 0.6666666666666666,
-          "recall": 0.5,
-          "f1-score": 0.5714285714285714,
-          "support": 8.0
+          "precision": 0.9522546419098143,
+          "recall": 0.9547872340425532,
+          "f1-score": 0.953519256308101,
+          "support": 376.0
         },
         "Incident": {
-          "precision": 0.717948717948718,
-          "recall": 0.9333333333333333,
-          "f1-score": 0.8115942028985508,
-          "support": 30.0
+          "precision": 0.7966954022988506,
+          "recall": 0.7837455830388692,
+          "f1-score": 0.790167438546491,
+          "support": 1415.0
         },
         "Problem": {
-          "precision": 0.625,
-          "recall": 0.3125,
-          "f1-score": 0.4166666666666667,
-          "support": 16.0
+          "precision": 0.6018396846254928,
+          "recall": 0.6189189189189189,
+          "f1-score": 0.6102598267821452,
+          "support": 740.0
         },
         "Request": {
-          "precision": 0.8636363636363636,
-          "recall": 0.9047619047619048,
-          "f1-score": 0.8837209302325582,
-          "support": 21.0
+          "precision": 0.9864472410454985,
+          "recall": 0.9874031007751938,
+          "f1-score": 0.9869249394673123,
+          "support": 1032.0
         },
-        "accuracy": 0.7466666666666667,
+        "accuracy": 0.8265506595565535,
         "macro avg": {
-          "precision": 0.7183129370629371,
-          "recall": 0.6626488095238096,
-          "f1-score": 0.6708525928065867,
-          "support": 75.0
+          "precision": 0.8343092424699141,
+          "recall": 0.8362137091938837,
+          "f1-score": 0.8352178652760123,
+          "support": 3563.0
         },
         "weighted avg": {
-          "precision": 0.7334421134421135,
-          "recall": 0.7466666666666667,
-          "f1-score": 0.7219208114658063,
-          "support": 75.0
+          "precision": 0.8276022057234866,
+          "recall": 0.8265506595565535,
+          "f1-score": 0.8270303045928106,
+          "support": 3563.0
         }
       },
-      "latency": {
-        "mean_ms": 0.6,
-        "std_ms": 0.17,
-        "p50_ms": 0.55,
-        "p95_ms": 1.03,
-        "p99_ms": 1.23,
-        "throughput_samples_per_sec": 1656.84
-      }
-    },
-    "transformer": {
-      "model_name": "DistilBERT (LoRA / PEFT)",
-      "accuracy": 0.6133,
-      "macro_f1": 0.3724,
-      "weighted_f1": 0.5009,
       "confusion_matrix": [
         [
-          0,
+          359,
           4,
           0,
-          4
+          13
         ],
         [
-          0,
-          29,
-          0,
+          3,
+          1109,
+          303,
+          0
+        ],
+        [
+          2,
+          279,
+          458,
           1
         ],
         [
+          13,
           0,
-          16,
           0,
+          1019
+        ]
+      ],
+      "threshold_analysis": [
+        {
+          "threshold": 0.5,
+          "coverage": 0.9686,
+          "precision": 0.8369,
+          "auto_accepted": 3451
+        },
+        {
+          "threshold": 0.6,
+          "coverage": 0.8237,
+          "precision": 0.8773,
+          "auto_accepted": 2935
+        },
+        {
+          "threshold": 0.7,
+          "coverage": 0.6845,
+          "precision": 0.9205,
+          "auto_accepted": 2439
+        },
+        {
+          "threshold": 0.8,
+          "coverage": 0.5262,
+          "precision": 0.9595,
+          "auto_accepted": 1875
+        },
+        {
+          "threshold": 0.9,
+          "coverage": 0.3615,
+          "precision": 0.9876,
+          "auto_accepted": 1288
+        }
+      ],
+      "length_buckets": [
+        {
+          "bucket": "< 50 words",
+          "tickets": 1423,
+          "accuracy": 0.8313,
+          "macro_f1": 0.8483
+        },
+        {
+          "bucket": "50-99 words",
+          "tickets": 1838,
+          "accuracy": 0.8341,
+          "macro_f1": 0.836
+        },
+        {
+          "bucket": "100-199 words",
+          "tickets": 296,
+          "accuracy": 0.7568,
+          "macro_f1": 0.7578
+        },
+        {
+          "bucket": ">= 200 words",
+          "tickets": 6,
+          "accuracy": 0.8333,
+          "macro_f1": 0.5
+        }
+      ],
+      "error_analysis": {
+        "errors": 618,
+        "error_rate": 0.1734,
+        "top_confusions": [
+          {
+            "true": "Incident",
+            "predicted": "Problem",
+            "count": 303,
+            "share_of_errors": 0.4903
+          },
+          {
+            "true": "Problem",
+            "predicted": "Incident",
+            "count": 279,
+            "share_of_errors": 0.4515
+          },
+          {
+            "true": "Change",
+            "predicted": "Request",
+            "count": 13,
+            "share_of_errors": 0.021
+          },
+          {
+            "true": "Request",
+            "predicted": "Change",
+            "count": 13,
+            "share_of_errors": 0.021
+          },
+          {
+            "true": "Change",
+            "predicted": "Incident",
+            "count": 4,
+            "share_of_errors": 0.0065
+          },
+          {
+            "true": "Incident",
+            "predicted": "Change",
+            "count": 3,
+            "share_of_errors": 0.0049
+          }
+        ],
+        "most_confident_errors": [
+          {
+            "true": "Problem",
+            "predicted": "Incident",
+            "confidence": 0.9698,
+            "text": "Report of Data Security Concern  Dear Customer Support,<br><br>The healthcare organization encountered data security problems impacting several systems, possibly due to recent configuration updates. Rebooting affected de..."
+          },
+          {
+            "true": "Problem",
+            "predicted": "Incident",
+            "confidence": 0.9482,
+            "text": "Report of Data Security Concerns  Dear Customer Support,<br><br>Our healthcare organization has encountered data security challenges impacting several systems, likely due to recent configuration updates. Rebooting affect..."
+          },
+          {
+            "true": "Change",
+            "predicted": "Request",
+            "confidence": 0.9391,
+            "text": "Enhance Investment Strategies with Machine Learning  Respected customer support, I am reaching out to seek information on leveraging machine learning for optimizing investment portfolios through real-time market data and..."
+          },
+          {
+            "true": "Incident",
+            "predicted": "Problem",
+            "confidence": 0.9383,
+            "text": "Customer Concern  A healthcare provider faced unauthorized access attempts to medical data, possibly due to outdated security protocols. They have attempted to update firewalls and are conducting employee training on dat..."
+          },
+          {
+            "true": "Problem",
+            "predicted": "Incident",
+            "confidence": 0.9342,
+            "text": "Identified Error in Payment Processing System  We are encountering problems with the billing system, which are hindering our ability to process payments. This may be related to a recent software update. We have attempted..."
+          },
+          {
+            "true": "Problem",
+            "predicted": "Incident",
+            "confidence": 0.9268,
+            "text": "Technical Difficulty  The marketing agency's website has been crashing frequently during traffic spikes, probably due to inadequate server capacity. Attempts to restart the server and clear the cache have not resolved th..."
+          }
+        ]
+      },
+      "latency": {
+        "mean_ms": 0.77,
+        "p50_ms": 0.78,
+        "p95_ms": 0.83,
+        "p99_ms": 0.87,
+        "throughput_samples_per_sec": 1291.5
+      },
+      "handwritten": {
+        "tickets": 24,
+        "accuracy": 0.3333,
+        "macro_f1": 0.3616,
+        "holdout": {
+          "tickets": 24,
+          "accuracy": 0.3333,
+          "macro_f1": 0.3616
+        },
+        "development": {
+          "tickets": 48,
+          "accuracy": 0.4792,
+          "macro_f1": 0.4603
+        }
+      },
+      "train_samples": 7000
+    },
+    "keras": {
+      "model_name": "Keras CNN (TensorFlow)",
+      "test_samples": 3563,
+      "accuracy": 0.7884,
+      "macro_f1": 0.8095,
+      "weighted_f1": 0.7932,
+      "classification_report": {
+        "Change": {
+          "precision": 0.9536784741144414,
+          "recall": 0.9308510638297872,
+          "f1-score": 0.9421265141318977,
+          "support": 376.0
+        },
+        "Incident": {
+          "precision": 0.8089788732394366,
+          "recall": 0.649469964664311,
+          "f1-score": 0.7205017640141121,
+          "support": 1415.0
+        },
+        "Problem": {
+          "precision": 0.5127701375245579,
+          "recall": 0.7054054054054054,
+          "f1-score": 0.5938566552901023,
+          "support": 740.0
+        },
+        "Request": {
+          "precision": 0.9769673704414588,
+          "recall": 0.9864341085271318,
+          "f1-score": 0.9816779170684667,
+          "support": 1032.0
+        },
+        "accuracy": 0.7883805781644682,
+        "macro avg": {
+          "precision": 0.8130987138299737,
+          "recall": 0.8180401356066589,
+          "f1-score": 0.8095407126261448,
+          "support": 3563.0
+        },
+        "weighted avg": {
+          "precision": 0.8113860342308704,
+          "recall": 0.7883805781644682,
+          "f1-score": 0.793234662004742,
+          "support": 3563.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          350,
+          4,
+          3,
+          19
+        ],
+        [
+          4,
+          919,
+          491,
+          1
+        ],
+        [
+          1,
+          213,
+          522,
+          4
+        ],
+        [
+          12,
+          0,
+          2,
+          1018
+        ]
+      ],
+      "threshold_analysis": [
+        {
+          "threshold": 0.5,
+          "coverage": 0.9958,
+          "precision": 0.7892,
+          "auto_accepted": 3548
+        },
+        {
+          "threshold": 0.6,
+          "coverage": 0.8653,
+          "precision": 0.8239,
+          "auto_accepted": 3083
+        },
+        {
+          "threshold": 0.7,
+          "coverage": 0.7345,
+          "precision": 0.8678,
+          "auto_accepted": 2617
+        },
+        {
+          "threshold": 0.8,
+          "coverage": 0.6076,
+          "precision": 0.9173,
+          "auto_accepted": 2165
+        },
+        {
+          "threshold": 0.9,
+          "coverage": 0.4701,
+          "precision": 0.9678,
+          "auto_accepted": 1675
+        }
+      ],
+      "length_buckets": [
+        {
+          "bucket": "< 50 words",
+          "tickets": 1423,
+          "accuracy": 0.7723,
+          "macro_f1": 0.8039
+        },
+        {
+          "bucket": "50-99 words",
+          "tickets": 1838,
+          "accuracy": 0.8025,
+          "macro_f1": 0.8174
+        },
+        {
+          "bucket": "100-199 words",
+          "tickets": 296,
+          "accuracy": 0.7736,
+          "macro_f1": 0.7774
+        },
+        {
+          "bucket": ">= 200 words",
+          "tickets": 6,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        }
+      ],
+      "error_analysis": {
+        "errors": 754,
+        "error_rate": 0.2116,
+        "top_confusions": [
+          {
+            "true": "Incident",
+            "predicted": "Problem",
+            "count": 491,
+            "share_of_errors": 0.6512
+          },
+          {
+            "true": "Problem",
+            "predicted": "Incident",
+            "count": 213,
+            "share_of_errors": 0.2825
+          },
+          {
+            "true": "Change",
+            "predicted": "Request",
+            "count": 19,
+            "share_of_errors": 0.0252
+          },
+          {
+            "true": "Request",
+            "predicted": "Change",
+            "count": 12,
+            "share_of_errors": 0.0159
+          },
+          {
+            "true": "Change",
+            "predicted": "Incident",
+            "count": 4,
+            "share_of_errors": 0.0053
+          },
+          {
+            "true": "Problem",
+            "predicted": "Request",
+            "count": 4,
+            "share_of_errors": 0.0053
+          }
+        ],
+        "most_confident_errors": [
+          {
+            "true": "Change",
+            "predicted": "Request",
+            "confidence": 1.0,
+            "text": "Enhance Investment Strategies with Machine Learning  Respected customer support, I am reaching out to seek information on leveraging machine learning for optimizing investment portfolios through real-time market data and..."
+          },
+          {
+            "true": "Change",
+            "predicted": "Request",
+            "confidence": 0.9981,
+            "text": "Support Required for Data Analytics Integration with JIRA and Zoho Books  I am contacting you to seek support for integrating data analytics with JIRA and Zoho Books to optimize investments on Ubuntu systems. I need deta..."
+          },
+          {
+            "true": "Problem",
+            "predicted": "Request",
+            "confidence": 0.997,
+            "text": "Question About Marketing Agency Software Compatibility  Dear Support Team,\\n\\nI hope this message reaches you well. I am reaching out to ask about the compatibility of your products with the specific needs of marketing a..."
+          },
+          {
+            "true": "Change",
+            "predicted": "Request",
+            "confidence": 0.9955,
+            "text": "Enhancement of Digital Infrastructure  Hello Customer Support, I'm reaching out to explore the possibilities of upgrading our digital infrastructure to support our brand's growth and optimize our marketing strategy. We a..."
+          },
+          {
+            "true": "Request",
+            "predicted": "Change",
+            "confidence": 0.9911,
+            "text": "Protocols for Ensuring Medical Data Security  We highly value the security of medical data and advise the use of encryption and two-factor authentication to safeguard it. Additionally, we recommend maintaining regular up..."
+          },
+          {
+            "true": "Problem",
+            "predicted": "Incident",
+            "confidence": 0.9876,
+            "text": "Device Malfunction Threatening Data Security  A healthcare provider encountered several device malfunctions that jeopardized the security of medical data. The devices were rebooted and their software was updated."
+          }
+        ]
+      },
+      "latency": {
+        "mean_ms": 7.74,
+        "p50_ms": 7.71,
+        "p95_ms": 7.9,
+        "p99_ms": 8.02,
+        "throughput_samples_per_sec": 129.24
+      },
+      "handwritten": {
+        "tickets": 24,
+        "accuracy": 0.4583,
+        "macro_f1": 0.4429,
+        "holdout": {
+          "tickets": 24,
+          "accuracy": 0.4583,
+          "macro_f1": 0.4429
+        },
+        "development": {
+          "tickets": 48,
+          "accuracy": 0.3958,
+          "macro_f1": 0.4032
+        }
+      },
+      "train_samples": 7000
+    },
+    "transformer": {
+      "model_name": "DistilBERT + LoRA (PyTorch/PEFT)",
+      "test_samples": 3563,
+      "accuracy": 0.792,
+      "macro_f1": 0.779,
+      "weighted_f1": 0.7777,
+      "classification_report": {
+        "Change": {
+          "precision": 0.935064935064935,
+          "recall": 0.9574468085106383,
+          "f1-score": 0.9461235216819974,
+          "support": 376.0
+        },
+        "Incident": {
+          "precision": 0.7114928909952607,
+          "recall": 0.8487632508833922,
+          "f1-score": 0.7740895907186593,
+          "support": 1415.0
+        },
+        "Problem": {
+          "precision": 0.5391304347826087,
+          "recall": 0.33513513513513515,
+          "f1-score": 0.41333333333333333,
+          "support": 740.0
+        },
+        "Request": {
+          "precision": 0.983495145631068,
+          "recall": 0.9815891472868217,
+          "f1-score": 0.9825412221144519,
+          "support": 1032.0
+        },
+        "accuracy": 0.7920291888857705,
+        "macro avg": {
+          "precision": 0.7922958516184682,
+          "recall": 0.780733585453997,
+          "f1-score": 0.7790219169621105,
+          "support": 3563.0
+        },
+        "weighted avg": {
+          "precision": 0.7780719529534388,
+          "recall": 0.7920291888857705,
+          "f1-score": 0.7776953193679806,
+          "support": 3563.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          360,
+          1,
+          4,
+          11
+        ],
+        [
+          2,
+          1201,
+          208,
+          4
+        ],
+        [
+          4,
+          486,
+          248,
+          2
+        ],
+        [
+          19,
+          0,
+          0,
+          1013
+        ]
+      ],
+      "threshold_analysis": [
+        {
+          "threshold": 0.5,
+          "coverage": 0.9978,
+          "precision": 0.793,
+          "auto_accepted": 3555
+        },
+        {
+          "threshold": 0.6,
+          "coverage": 0.826,
+          "precision": 0.8502,
+          "auto_accepted": 2943
+        },
+        {
+          "threshold": 0.7,
+          "coverage": 0.6758,
+          "precision": 0.8999,
+          "auto_accepted": 2408
+        },
+        {
+          "threshold": 0.8,
+          "coverage": 0.5484,
+          "precision": 0.9442,
+          "auto_accepted": 1954
+        },
+        {
+          "threshold": 0.9,
+          "coverage": 0.442,
+          "precision": 0.9778,
+          "auto_accepted": 1575
+        }
+      ],
+      "length_buckets": [
+        {
+          "bucket": "< 50 words",
+          "tickets": 1423,
+          "accuracy": 0.7772,
+          "macro_f1": 0.7817
+        },
+        {
+          "bucket": "50-99 words",
+          "tickets": 1838,
+          "accuracy": 0.8036,
+          "macro_f1": 0.7757
+        },
+        {
+          "bucket": "100-199 words",
+          "tickets": 296,
+          "accuracy": 0.7905,
+          "macro_f1": 0.7718
+        },
+        {
+          "bucket": ">= 200 words",
+          "tickets": 6,
+          "accuracy": 0.8333,
+          "macro_f1": 0.5
+        }
+      ],
+      "error_analysis": {
+        "errors": 741,
+        "error_rate": 0.208,
+        "top_confusions": [
+          {
+            "true": "Problem",
+            "predicted": "Incident",
+            "count": 486,
+            "share_of_errors": 0.6559
+          },
+          {
+            "true": "Incident",
+            "predicted": "Problem",
+            "count": 208,
+            "share_of_errors": 0.2807
+          },
+          {
+            "true": "Request",
+            "predicted": "Change",
+            "count": 19,
+            "share_of_errors": 0.0256
+          },
+          {
+            "true": "Change",
+            "predicted": "Request",
+            "count": 11,
+            "share_of_errors": 0.0148
+          },
+          {
+            "true": "Change",
+            "predicted": "Problem",
+            "count": 4,
+            "share_of_errors": 0.0054
+          },
+          {
+            "true": "Incident",
+            "predicted": "Request",
+            "count": 4,
+            "share_of_errors": 0.0054
+          }
+        ],
+        "most_confident_errors": [
+          {
+            "true": "Request",
+            "predicted": "Change",
+            "confidence": 0.9994,
+            "text": "Enhance Ubiquiti UniFi Dream Machine for better digital marketing strategies and improved network performance and security."
+          },
+          {
+            "true": "Request",
+            "predicted": "Change",
+            "confidence": 0.9894,
+            "text": "Protocols for Ensuring Medical Data Security  We highly value the security of medical data and advise the use of encryption and two-factor authentication to safeguard it. Additionally, we recommend maintaining regular up..."
+          },
+          {
+            "true": "Change",
+            "predicted": "Request",
+            "confidence": 0.989,
+            "text": "Support for Enhancing Data Analytics with Moodle and Azure  I am contacting you to explore ways of enhancing data analytics integration with Moodle and Azure to derive investment insights. Could you share more details on..."
+          },
+          {
+            "true": "Request",
+            "predicted": "Change",
+            "confidence": 0.9824,
+            "text": "Enhance digital strategies by integrating Jenkins and Redis to promote brand development."
+          },
+          {
+            "true": "Problem",
+            "predicted": "Incident",
+            "confidence": 0.9789,
+            "text": "Concern Regarding Data Integration System  Faced issues with the data integration system, which has impacted the performance of our investment analytics tools. The disruption might be due to recent software updates or co..."
+          },
+          {
+            "true": "Request",
+            "predicted": "Change",
+            "confidence": 0.9754,
+            "text": "Improved Support for Shopify KNIME Marketing Analytics Integration  Hello, we are seeking assistance with integrating Shopify and KNIME for enhanced marketing analytics. We would like to know the detailed steps involved ..."
+          }
+        ]
+      },
+      "latency": {
+        "mean_ms": 57.37,
+        "p50_ms": 56.66,
+        "p95_ms": 82.47,
+        "p99_ms": 83.96,
+        "throughput_samples_per_sec": 17.43
+      },
+      "handwritten": {
+        "tickets": 24,
+        "accuracy": 0.625,
+        "macro_f1": 0.6405,
+        "holdout": {
+          "tickets": 24,
+          "accuracy": 0.625,
+          "macro_f1": 0.6405
+        },
+        "development": {
+          "tickets": 48,
+          "accuracy": 0.7083,
+          "macro_f1": 0.7266
+        }
+      },
+      "train_samples": 7000
+    },
+    "baseline": {
+      "model_name": "Served TF-IDF (all data, model only)",
+      "test_samples": 3563,
+      "accuracy": 0.8712,
+      "macro_f1": 0.8782,
+      "weighted_f1": 0.8717,
+      "classification_report": {
+        "Change": {
+          "precision": 0.9705882352941176,
+          "recall": 0.9654255319148937,
+          "f1-score": 0.968,
+          "support": 376.0
+        },
+        "Incident": {
+          "precision": 0.8527075812274368,
+          "recall": 0.8346289752650177,
+          "f1-score": 0.8435714285714285,
+          "support": 1415.0
+        },
+        "Problem": {
+          "precision": 0.6970091027308193,
+          "recall": 0.7243243243243244,
+          "f1-score": 0.7104042412193505,
+          "support": 740.0
+        },
+        "Request": {
+          "precision": 0.9893719806763285,
+          "recall": 0.9922480620155039,
+          "f1-score": 0.9908079342041606,
+          "support": 1032.0
+        },
+        "accuracy": 0.8711759753017121,
+        "macro avg": {
+          "precision": 0.8774192249821755,
+          "recall": 0.8791567233799349,
+          "f1-score": 0.8781959009987348,
+          "support": 3563.0
+        },
+        "weighted avg": {
+          "precision": 0.8723943373522842,
+          "recall": 0.8711759753017121,
+          "f1-score": 0.8716908498539389,
+          "support": 3563.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          363,
+          2,
+          1,
+          10
+        ],
+        [
+          2,
+          1181,
+          232,
           0
         ],
         [
+          2,
+          201,
+          536,
+          1
+        ],
+        [
+          7,
+          1,
           0,
-          4,
-          0,
-          17
+          1024
         ]
       ],
-      "classification_report": {
-        "Change": {
-          "precision": 0.0,
-          "recall": 0.0,
-          "f1-score": 0.0,
-          "support": 8.0
+      "threshold_analysis": [
+        {
+          "threshold": 0.5,
+          "coverage": 0.9913,
+          "precision": 0.8743,
+          "auto_accepted": 3532
         },
-        "Incident": {
-          "precision": 0.5471698113207547,
-          "recall": 0.9666666666666667,
-          "f1-score": 0.6987951807228916,
-          "support": 30.0
+        {
+          "threshold": 0.6,
+          "coverage": 0.879,
+          "precision": 0.9109,
+          "auto_accepted": 3132
         },
-        "Problem": {
-          "precision": 0.0,
-          "recall": 0.0,
-          "f1-score": 0.0,
-          "support": 16.0
+        {
+          "threshold": 0.7,
+          "coverage": 0.7715,
+          "precision": 0.9425,
+          "auto_accepted": 2749
         },
-        "Request": {
-          "precision": 0.7727272727272727,
-          "recall": 0.8095238095238095,
-          "f1-score": 0.7906976744186046,
-          "support": 21.0
+        {
+          "threshold": 0.8,
+          "coverage": 0.6503,
+          "precision": 0.9642,
+          "auto_accepted": 2317
         },
-        "accuracy": 0.6133333333333333,
-        "macro avg": {
-          "precision": 0.3299742710120068,
-          "recall": 0.444047619047619,
-          "f1-score": 0.372373213785374,
-          "support": 75.0
-        },
-        "weighted avg": {
-          "precision": 0.4352315608919382,
-          "recall": 0.6133333333333333,
-          "f1-score": 0.5009134211263659,
-          "support": 75.0
+        {
+          "threshold": 0.9,
+          "coverage": 0.4999,
+          "precision": 0.9865,
+          "auto_accepted": 1781
         }
+      ],
+      "length_buckets": [
+        {
+          "bucket": "< 50 words",
+          "tickets": 1423,
+          "accuracy": 0.8665,
+          "macro_f1": 0.8796
+        },
+        {
+          "bucket": "50-99 words",
+          "tickets": 1838,
+          "accuracy": 0.8814,
+          "macro_f1": 0.8833
+        },
+        {
+          "bucket": "100-199 words",
+          "tickets": 296,
+          "accuracy": 0.8311,
+          "macro_f1": 0.8364
+        },
+        {
+          "bucket": ">= 200 words",
+          "tickets": 6,
+          "accuracy": 0.8333,
+          "macro_f1": 0.5
+        }
+      ],
+      "error_analysis": {
+        "errors": 459,
+        "error_rate": 0.1288,
+        "top_confusions": [
+          {
+            "true": "Incident",
+            "predicted": "Problem",
+            "count": 232,
+            "share_of_errors": 0.5054
+          },
+          {
+            "true": "Problem",
+            "predicted": "Incident",
+            "count": 201,
+            "share_of_errors": 0.4379
+          },
+          {
+            "true": "Change",
+            "predicted": "Request",
+            "count": 10,
+            "share_of_errors": 0.0218
+          },
+          {
+            "true": "Request",
+            "predicted": "Change",
+            "count": 7,
+            "share_of_errors": 0.0153
+          },
+          {
+            "true": "Change",
+            "predicted": "Incident",
+            "count": 2,
+            "share_of_errors": 0.0044
+          },
+          {
+            "true": "Incident",
+            "predicted": "Change",
+            "count": 2,
+            "share_of_errors": 0.0044
+          }
+        ],
+        "most_confident_errors": [
+          {
+            "true": "Incident",
+            "predicted": "Problem",
+            "confidence": 0.9581,
+            "text": "Customer Concern  A healthcare provider faced unauthorized access attempts to medical data, possibly due to outdated security protocols. They have attempted to update firewalls and are conducting employee training on dat..."
+          },
+          {
+            "true": "Problem",
+            "predicted": "Incident",
+            "confidence": 0.9573,
+            "text": "Report of Data Security Concern  Dear Customer Support,<br><br>The healthcare organization encountered data security problems impacting several systems, possibly due to recent configuration updates. Rebooting affected de..."
+          },
+          {
+            "true": "Problem",
+            "predicted": "Incident",
+            "confidence": 0.9528,
+            "text": "Cybersecurity Breach Affecting Medical Data Systems  Dear Customer Support,<br><br>I am submitting a report concerning a cybersecurity breach that has compromised the hospital's medical data systems. The incident may hav..."
+          },
+          {
+            "true": "Problem",
+            "predicted": "Incident",
+            "confidence": 0.9502,
+            "text": "Security Incident Involving Medical Records  A security incident has compromised medical records; potential malware infection and unauthorized access detected. System scans and password resets have been attempted."
+          },
+          {
+            "true": "Change",
+            "predicted": "Request",
+            "confidence": 0.9502,
+            "text": "Enhance Investment Strategies with Machine Learning  Respected customer support, I am reaching out to seek information on leveraging machine learning for optimizing investment portfolios through real-time market data and..."
+          },
+          {
+            "true": "Problem",
+            "predicted": "Incident",
+            "confidence": 0.9408,
+            "text": "System Downtime  Marketing agency facing system outages on various platforms, hindering progress on brand growth initiatives due to server issues and software incompatibility."
+          }
+        ]
       },
       "latency": {
-        "mean_ms": 30.34,
-        "std_ms": 11.59,
-        "p50_ms": 27.5,
-        "p95_ms": 49.51,
-        "p99_ms": 52.08,
-        "throughput_samples_per_sec": 32.96
+        "mean_ms": 0.79,
+        "p50_ms": 0.79,
+        "p95_ms": 0.85,
+        "p99_ms": 0.9,
+        "throughput_samples_per_sec": 1265.2
+      },
+      "handwritten": {
+        "tickets": 24,
+        "accuracy": 0.375,
+        "macro_f1": 0.4082,
+        "holdout": {
+          "tickets": 24,
+          "accuracy": 0.375,
+          "macro_f1": 0.4082
+        },
+        "development": {
+          "tickets": 48,
+          "accuracy": 0.5,
+          "macro_f1": 0.48
+        }
+      },
+      "train_samples": 16622
+    },
+    "baseline_itil": {
+      "model_name": "Served TF-IDF + ITIL cues (production)",
+      "test_samples": 3563,
+      "accuracy": 0.8549,
+      "macro_f1": 0.8635,
+      "weighted_f1": 0.8565,
+      "classification_report": {
+        "Change": {
+          "precision": 0.9546666666666667,
+          "recall": 0.9521276595744681,
+          "f1-score": 0.9533954727030626,
+          "support": 376.0
+        },
+        "Incident": {
+          "precision": 0.856159143075746,
+          "recall": 0.7908127208480565,
+          "f1-score": 0.8221895664952241,
+          "support": 1415.0
+        },
+        "Problem": {
+          "precision": 0.6511904761904762,
+          "recall": 0.7391891891891892,
+          "f1-score": 0.6924050632911393,
+          "support": 740.0
+        },
+        "Request": {
+          "precision": 0.9817483189241114,
+          "recall": 0.9903100775193798,
+          "f1-score": 0.9860106126386879,
+          "support": 1032.0
+        },
+        "accuracy": 0.8548975582374404,
+        "macro avg": {
+          "precision": 0.86094115121425,
+          "recall": 0.8681099117827734,
+          "f1-score": 0.8635001787820286,
+          "support": 3563.0
+        },
+        "weighted avg": {
+          "precision": 0.8603606712403823,
+          "recall": 0.8548975582374404,
+          "f1-score": 0.8565303489771716,
+          "support": 3563.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          358,
+          2,
+          1,
+          15
+        ],
+        [
+          2,
+          1119,
+          292,
+          2
+        ],
+        [
+          6,
+          185,
+          547,
+          2
+        ],
+        [
+          9,
+          1,
+          0,
+          1022
+        ]
+      ],
+      "threshold_analysis": [
+        {
+          "threshold": 0.5,
+          "coverage": 0.9879,
+          "precision": 0.8599,
+          "auto_accepted": 3520
+        },
+        {
+          "threshold": 0.6,
+          "coverage": 0.8774,
+          "precision": 0.8944,
+          "auto_accepted": 3126
+        },
+        {
+          "threshold": 0.7,
+          "coverage": 0.7752,
+          "precision": 0.9254,
+          "auto_accepted": 2762
+        },
+        {
+          "threshold": 0.8,
+          "coverage": 0.661,
+          "precision": 0.9482,
+          "auto_accepted": 2355
+        },
+        {
+          "threshold": 0.9,
+          "coverage": 0.517,
+          "precision": 0.9739,
+          "auto_accepted": 1842
+        }
+      ],
+      "length_buckets": [
+        {
+          "bucket": "< 50 words",
+          "tickets": 1423,
+          "accuracy": 0.8651,
+          "macro_f1": 0.8795
+        },
+        {
+          "bucket": "50-99 words",
+          "tickets": 1838,
+          "accuracy": 0.8536,
+          "macro_f1": 0.8587
+        },
+        {
+          "bucket": "100-199 words",
+          "tickets": 296,
+          "accuracy": 0.8108,
+          "macro_f1": 0.8108
+        },
+        {
+          "bucket": ">= 200 words",
+          "tickets": 6,
+          "accuracy": 1.0,
+          "macro_f1": 1.0
+        }
+      ],
+      "error_analysis": {
+        "errors": 517,
+        "error_rate": 0.1451,
+        "top_confusions": [
+          {
+            "true": "Incident",
+            "predicted": "Problem",
+            "count": 292,
+            "share_of_errors": 0.5648
+          },
+          {
+            "true": "Problem",
+            "predicted": "Incident",
+            "count": 185,
+            "share_of_errors": 0.3578
+          },
+          {
+            "true": "Change",
+            "predicted": "Request",
+            "count": 15,
+            "share_of_errors": 0.029
+          },
+          {
+            "true": "Request",
+            "predicted": "Change",
+            "count": 9,
+            "share_of_errors": 0.0174
+          },
+          {
+            "true": "Problem",
+            "predicted": "Change",
+            "count": 6,
+            "share_of_errors": 0.0116
+          },
+          {
+            "true": "Change",
+            "predicted": "Incident",
+            "count": 2,
+            "share_of_errors": 0.0039
+          }
+        ],
+        "most_confident_errors": [
+          {
+            "true": "Change",
+            "predicted": "Request",
+            "confidence": 0.9884,
+            "text": "Enhance Investment Strategies with Machine Learning  Respected customer support, I am reaching out to seek information on leveraging machine learning for optimizing investment portfolios through real-time market data and..."
+          },
+          {
+            "true": "Incident",
+            "predicted": "Problem",
+            "confidence": 0.9771,
+            "text": "Support for Digital Campaign  Our marketing campaign aimed at digital growth is underperforming, resulting in reduced brand visibility. This might be due to a lack of alignment with the target audience's preferences in o..."
+          },
+          {
+            "true": "Change",
+            "predicted": "Request",
+            "confidence": 0.9759,
+            "text": "Secure Data Storage Systems  Hello Customer Support, I am contacting you to seek details on the recent updates concerning secure medical data storage and transmission methods for hospital IT infrastructure and equipment...."
+          },
+          {
+            "true": "Incident",
+            "predicted": "Problem",
+            "confidence": 0.9748,
+            "text": "Troubleshooting Connectivity Issues in Project Management SaaS  Recently, users have been encountering connectivity problems with the project management SaaS platform. These issues might be due to network instability or ..."
+          },
+          {
+            "true": "Change",
+            "predicted": "Request",
+            "confidence": 0.9747,
+            "text": "Support Required for Data Analytics Integration with JIRA and Zoho Books  I am contacting you to seek support for integrating data analytics with JIRA and Zoho Books to optimize investments on Ubuntu systems. I need deta..."
+          },
+          {
+            "true": "Problem",
+            "predicted": "Incident",
+            "confidence": 0.9739,
+            "text": "Problem Encountered with Cloud Platform Today  The cloud platform experienced a failure, leading to data loss and an outage. Restarting the services enhanced the capacity."
+          }
+        ]
+      },
+      "latency": {
+        "mean_ms": 0.79,
+        "p50_ms": 0.79,
+        "p95_ms": 0.85,
+        "p99_ms": 0.9,
+        "throughput_samples_per_sec": 1265.2
+      },
+      "train_samples": 16622,
+      "handwritten": {
+        "tickets": 24,
+        "accuracy": 0.7917,
+        "macro_f1": 0.796,
+        "holdout": {
+          "tickets": 24,
+          "accuracy": 0.7917,
+          "macro_f1": 0.796
+        },
+        "development": {
+          "tickets": 48,
+          "accuracy": 0.7708,
+          "macro_f1": 0.7692
+        }
       }
     }
   }

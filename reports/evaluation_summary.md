@@ -1,26 +1,42 @@
-# TicketLens: Model Evaluation & Benchmark Summary
+# TicketLens: Model Benchmark Summary
 
-- **Dataset Source:** Tobi-Bueck/customer-support-tickets
-- **Held-Out Test Set Size:** 75 samples
-- **Evaluated Classes:** Change, Incident, Problem, Request
+- **Dataset:** Tobi-Bueck/customer-support-tickets
+- **Held-out test set:** 3,563 tickets (identical for every model)
+- **Classes:** Change, Incident, Problem, Request
 
-## Performance Comparison
+## Macro-F1 Benchmark
 
-| Model Architecture | Accuracy | Macro-F1 | Weighted-F1 | P50 Latency (ms) | P95 Latency (ms) | Throughput (req/s) |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **TF-IDF + Logistic Regression** | 0.7467 | 0.6709 | 0.7219 | 0.55 ms | 1.03 ms | 1656.84 req/s |
-| **DistilBERT (LoRA / PEFT)** | 0.6133 | 0.3724 | 0.5009 | 27.5 ms | 49.51 ms | 32.96 req/s |
+| Model | Train tickets | Accuracy | Macro-F1 | Weighted-F1 | Hand-written holdout acc. | P50 latency |
+| :--- | ---: | :---: | :---: | :---: | :---: | ---: |
+| **TF-IDF + Logistic Regression** | 7,000 | 0.8266 | **0.8352** | 0.8270 | 33% | 0.78 ms |
+| **Keras CNN (TensorFlow)** | 7,000 | 0.7884 | **0.8095** | 0.7932 | 46% | 7.71 ms |
+| **DistilBERT + LoRA (PyTorch/PEFT)** | 7,000 | 0.7920 | **0.7790** | 0.7777 | 62% | 56.66 ms |
+| **Served TF-IDF (all data, model only)** | 16,622 | 0.8712 | **0.8782** | 0.8717 | 38% | 0.79 ms |
+| **Served TF-IDF + ITIL cues (production)** | 16,622 | 0.8549 | **0.8635** | 0.8565 | 79% | 0.79 ms |
 
-## Operational Trade-Offs & Key Takeaways
+## Per-Class Precision / Recall
 
-1. **Inference Latency vs Semantic Generalization:**
-   - The **TF-IDF + Logistic Regression** baseline delivers sub-millisecond to low-millisecond CPU latency, making it extremely cost-efficient for high-volume ticket routing.
-   - The **DistilBERT (LoRA)** transformer captures deep contextual subtleties (e.g. nuanced phrases distinguishing a recurring *Problem* from an immediate *Incident*), but exhibits higher inference latency on CPU architectures.
-2. **Production Recommendation:**
-   - Use the **DistilBERT (LoRA)** model for tickets with complex descriptions or ambiguous phrasing, while leveraging the **TF-IDF Baseline** as a high-speed fallback or lightweight edge filter.
+| Model | Change P / R | Incident P / R | Problem P / R | Request P / R |
+| :--- | :---: | :---: | :---: | :---: |
+| TF-IDF + Logistic Regression | 0.95 / 0.95 | 0.80 / 0.78 | 0.60 / 0.62 | 0.99 / 0.99 |
+| Keras CNN (TensorFlow) | 0.95 / 0.93 | 0.81 / 0.65 | 0.51 / 0.71 | 0.98 / 0.99 |
+| DistilBERT + LoRA (PyTorch/PEFT) | 0.94 / 0.96 | 0.71 / 0.85 | 0.54 / 0.34 | 0.98 / 0.98 |
+| Served TF-IDF (all data, model only) | 0.97 / 0.97 | 0.85 / 0.83 | 0.70 / 0.72 | 0.99 / 0.99 |
+| Served TF-IDF + ITIL cues (production) | 0.95 / 0.95 | 0.86 / 0.79 | 0.65 / 0.74 | 0.98 / 0.99 |
 
-## Generated Figures
+## Notes
 
-- `reports/figures/confusion_matrix_baseline.png`
-- `reports/figures/confusion_matrix_transformer.png`
+- TF-IDF, Keras and DistilBERT are trained on the **same** training subset and scored on the **same** test tickets.
+- The served TF-IDF model uses all training data plus short-text augmentation; the production row adds the ITIL cue correction.
+- Hand-written holdout accuracy uses the 24 hand-labelled tickets in `data/fixtures/handwritten_holdout.json`, never used for tuning (the 48-ticket development set used to design the ITIL cues is reported separately in the JSON).
+- See `error_analysis.md` for confusion pairs, confidence-gate precision/coverage, length-bucket parity and error examples.
+
+## Figures
+
 - `reports/figures/model_comparison_f1.png`
+- `reports/figures/precision_coverage.png`
+- `reports/figures/confusion_matrix_tfidf_benchmark.png`
+- `reports/figures/confusion_matrix_keras.png`
+- `reports/figures/confusion_matrix_transformer.png`
+- `reports/figures/confusion_matrix_baseline.png`
+- `reports/figures/confusion_matrix_baseline_itil.png`

@@ -5,12 +5,14 @@
 [![Dataset License: CC BY-NC 4.0](https://img.shields.io/badge/Dataset-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 [![Framework: FastAPI](https://img.shields.io/badge/Framework-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
 [![Transformer: DistilBERT](https://img.shields.io/badge/Model-DistilBERT%20LoRA-orange.svg)](https://huggingface.co/distilbert/distilbert-base-uncased)
+[![Keras](https://img.shields.io/badge/Baseline-TensorFlow%20%2F%20Keras-FF6F00.svg)](https://keras.io/)
+[![Benchmark](https://github.com/Charanloyal/ticketlens/actions/workflows/benchmark.yml/badge.svg)](https://github.com/Charanloyal/ticketlens/actions/workflows/benchmark.yml)
 [![CI](https://github.com/Charanloyal/ticketlens/actions/workflows/ci.yml/badge.svg)](https://github.com/Charanloyal/ticketlens/actions/workflows/ci.yml)
-[![Tests: Pytest](https://img.shields.io/badge/Tests-57-brightgreen.svg)](https://docs.pytest.org/)
+[![Tests: Pytest](https://img.shields.io/badge/Tests-62-brightgreen.svg)](https://docs.pytest.org/)
 
-**TicketLens** is an end-to-end IT service desk ticket classification and triage engine with an ultra-sleek, dark-mode glassmorphic web dashboard. It classifies IT issues into standard ITIL categories (**Incident**, **Request**, **Problem**, **Change**) and evaluates a traditional sub-millisecond **TF-IDF + Logistic Regression** baseline against a contextual **DistilBERT** sequence classification transformer fine-tuned with **PEFT / LoRA**.
+**TicketLens** is an end-to-end IT service desk ticket classification and triage engine with an ultra-sleek, dark-mode glassmorphic web dashboard. It classifies IT issues into standard ITIL categories (**Incident**, **Request**, **Problem**, **Change**) by fine-tuning a pre-trained **DistilBERT** with **LoRA (Hugging Face Transformers + PEFT, PyTorch)** and benchmarking it on **macro-F1** against a **TF-IDF + Logistic Regression** baseline and a **Keras (TensorFlow) CNN** baseline, all scored on the identical held-out test set.
 
-The platform provides dataset sanitization with automated PII scrubbing (emails, phone numbers, IP addresses), SHAP feature attribution, dataset-level bias audits, single-sample latency benchmarking, and a high-performance **FastAPI** service with automated confidence-gated routing.
+The platform includes precision/recall **error analysis**, **SHAP** interpretability, a **bias check** (class balance, performance parity by ticket length, PII audit), PII scrubbing, latency benchmarking, and a **FastAPI** service with confidence-gated routing, packaged in **Docker** (a DistilBERT + LoRA image and a lightweight TF-IDF image that runs on Render's free plan).
 
 ---
 
@@ -23,21 +25,25 @@ flowchart TD
         ParquetCache --> FilterEN[Filter English Tickets: 28,261 rows]
         FilterEN --> PII[PII Sanitizer: Emails, Phone, IPs Redacted]
         PII --> Dedup[Deduplication: Prevent Cross-Split Leakage]
-        Dedup --> Split[Stratified Split: 70% Train / 15% Val / 15% Test]
+        Dedup --> Split[Stratified Split: 70% Train / 15% Val / 15% Test - test set fixed for every model]
     end
 
     subgraph Modeling["2. Model Training Pipelines"]
         Split -->|train.parquet| BaselinePipeline[Baseline Pipeline: TF-IDF + Logistic Regression]
+        Split -->|train.parquet| KerasPipeline[Keras Baseline: TextVectorization + Embedding + Conv1D]
         Split -->|train.parquet| TransformerPipeline[Transformer Pipeline: DistilBERT + LoRA / PEFT]
         BaselinePipeline --> BaselineArtifacts[Save Vectorizer & Weights: artifacts/models/baseline/]
+        KerasPipeline --> KerasArtifacts[Save Keras model: artifacts/models/keras/]
         TransformerPipeline --> TransformerArtifacts[Save LoRA Adapter & Tokenizer: artifacts/models/transformer/]
     end
 
     subgraph Evaluation["3. Evaluation, Explainability & Audit"]
-        Split -->|test.parquet| Evaluator[Evaluation Engine: Macro-F1, Acc, Latency]
+        Split -->|test.parquet| Evaluator[Evaluation Engine: Macro-F1, Precision/Recall, Latency]
         BaselineArtifacts --> Evaluator
+        KerasArtifacts --> Evaluator
         TransformerArtifacts --> Evaluator
         Evaluator --> ConfMatrix[Confusion Matrices: reports/figures/]
+        Evaluator --> ErrorAnalysis[Error Analysis: reports/error_analysis.md]
         Evaluator --> SHAP[SHAP LinearExplainer: reports/shap_summary.json]
         Evaluator --> BiasAudit[Bias & Distribution Audit: reports/bias_and_fairness_audit.json]
     end
@@ -110,7 +116,8 @@ TicketLens/
 │       ├── train_baseline.py     # TF-IDF + Logistic Regression training
 │       ├── build.py              # Production build (download → corpus → train, one process each)
 │       ├── train_transformer.py  # DistilBERT sequence classification with PEFT / LoRA
-│       ├── evaluate.py           # Test set evaluation, metrics, and plotting
+│       ├── train_keras.py        # Keras (TensorFlow) CNN baseline
+│       ├── evaluate.py           # Benchmark on the shared test set + precision/recall error analysis
 │       ├── explain.py            # SHAP attribution and dataset bias audit
 │       ├── predict.py            # Reproducible CLI and inference engine
 │       ├── itil_rules.py         # ITIL keyword cues that correct predictions on short tickets
@@ -121,19 +128,22 @@ TicketLens/
 │   ├── test_data.py              # Data cleaning, PII redaction, schema, and leakage tests
 │   ├── test_models.py            # Baseline fit, tokenization, and metric tests
 │   ├── test_api.py               # API health, metadata, auth, validation, and prediction tests
-│   └── test_quality.py           # ITIL cues, language detection, config overrides, augmentation
+│   ├── test_quality.py           # ITIL cues, language detection, config overrides, augmentation
+│   └── test_benchmark.py         # Fixed test split, Keras baseline, evaluation & error analysis
 ├── scripts/
 │   ├── run_pipeline.py           # End-to-end pipeline runner
 │   ├── benchmark_latency.py      # Latency & throughput benchmarking script
 │   ├── evaluate_handwritten.py   # Accuracy on hand-written, real-world-style tickets
 │   └── run.ps1                   # Windows PowerShell automation helper
-├── Dockerfile                    # Production container specification
+├── Dockerfile                    # Lightweight TF-IDF serving image (same as Render)
+├── Dockerfile.transformer        # DistilBERT + LoRA serving image (FastAPI)
 ├── .dockerignore                 # Container build exclusion rules
 ├── .gitignore                    # Git tracking ignore rules
 ├── requirements.txt              # Full dependency set (training, transformer, explainability)
 ├── requirements-render.txt       # Lightweight serving dependencies for Render (no torch)
 ├── render.yaml                   # Render Blueprint (free plan)
-├── .github/workflows/ci.yml      # CI: replays the Render build, tests, smoke test, Docker build
+├── .github/workflows/ci.yml      # CI: replays the Render build, tests, smoke test, both Docker images
+├── .github/workflows/benchmark.yml # Trains TF-IDF, Keras & DistilBERT, evaluates, publishes the "models" release
 ├── LICENSE                       # Apache License 2.0
 ├── pyproject.toml                # Build configuration and pytest options
 ├── Makefile                      # Cross-platform development targets
@@ -179,13 +189,16 @@ pip install -e .
 
 | Command | Purpose |
 | :--- | :--- |
-| `pytest tests/ -v` | Run the complete automated test suite (57 tests) |
+| `pytest tests/ -v` | Run the complete automated test suite (62 tests) |
 | `python -m ticketlens.train_baseline --mode quick` | Train TF-IDF baseline model (quick verification run) |
 | `python -m ticketlens.build` | Production build exactly as on Render: download dataset, prepare corpus, train serving model (each step in its own process) |
 | `python -m ticketlens.train_baseline --mode all` | Train the serving TF-IDF model on the full dataset in a single process (local development) |
 | `python scripts/evaluate_handwritten.py` | Score the serving model on hand-written tickets (with/without ITIL cues) |
-| `python -m ticketlens.train_transformer --mode quick` | Fine-tune DistilBERT (LoRA) model (quick verification run) |
-| `python -m ticketlens.evaluate` | Evaluate both models on held-out test set & generate figures |
+| `python -m ticketlens.train_baseline --mode full --model-name tfidf_benchmark --no-augment` | TF-IDF baseline on the benchmark subset (7,000 tickets) |
+| `python -m ticketlens.train_keras --mode full` | Keras (TensorFlow) CNN baseline on the same subset |
+| `python -m ticketlens.train_transformer --mode full` | Fine-tune DistilBERT with LoRA on the same subset (~20-35 min on CPU) |
+| `python -m ticketlens.evaluate` | Benchmark every trained model on the identical test set + error analysis |
+| `make benchmark` | All of the above plus SHAP / bias analysis |
 | `python -m ticketlens.explain` | Generate SHAP attributions and bias audit report |
 | `python scripts/benchmark_latency.py` | Benchmark inference latency (P50, P95, P99) & throughput |
 | `python -m ticketlens.predict "VPN dropped with TLS error"` | Classify a sample ticket from terminal CLI |
@@ -197,52 +210,74 @@ Alternatively, use the convenience helper scripts:
 
 ---
 
-## Actual Measured Model Evaluation Results
+## Benchmark Results (Macro-F1, identical held-out test set)
 
-### Serving Model (deployed on Render)
+Produced by the [Benchmark workflow](.github/workflows/benchmark.yml) (GitHub Actions, CPU, Python 3.11) and
+published with the trained models as the [`models` release](https://github.com/Charanloyal/ticketlens/releases/tag/models).
+Full reports: [`reports/evaluation_summary.md`](reports/evaluation_summary.md) and
+[`reports/error_analysis.md`](reports/error_analysis.md).
 
-TF-IDF (word 1–2 grams) + Logistic Regression trained with `--mode all` (16,622 tickets plus 31,221
-subject/first-sentence augmentations from the training split), followed by the ITIL cue correction in
-[`itil_rules.py`](src/ticketlens/itil_rules.py). Measured on CPU, Python 3.14:
+**Protocol.** The 23,747 cleaned, deduplicated English tickets are split once (70/15/15, stratified, seed 42).
+Every model is scored on the **same 3,563 test tickets**. The three architectures are trained on the **same
+7,000-ticket training subset** (CPU budget for the transformer) with a 1,500-ticket validation set for model
+selection; the served TF-IDF model uses the whole training split.
 
-| Evaluation set | Model only: Accuracy / Macro-F1 | With ITIL cues: Accuracy / Macro-F1 | Correct when auto-accepted (with cues) |
-| :--- | :---: | :---: | :---: |
-| Held-out dataset test split (3,563 tickets) | 0.8695 / 0.8763 | 0.8532 / 0.8618 | 94.8% (66% auto-accepted) |
-| Hand-written holdout (24 tickets, never used for tuning) | 0.38 / 0.41 | **0.79 / 0.80** | 100% (46% auto-accepted) |
-| Hand-written development set (48 tickets) | 0.52 / 0.51 | 0.79 / 0.79 | 100% (40% auto-accepted) |
+| Model | Framework | Train tickets | Accuracy | **Macro-F1** | Weighted-F1 | Hand-written holdout (24) | P50 latency |
+| :--- | :--- | ---: | :---: | :---: | :---: | :---: | ---: |
+| TF-IDF + Logistic Regression | scikit-learn | 7,000 | 0.8266 | **0.8352** | 0.8270 | 33% | 0.8 ms |
+| Keras CNN (TextVectorization + Embedding + Conv1D) | TensorFlow / Keras | 7,000 | 0.7884 | **0.8095** | 0.7932 | 46% | 7.7 ms |
+| DistilBERT + LoRA (r=8, q/v, 1.09% trainable) | PyTorch + HF Transformers + PEFT | 7,000 | 0.7920 | **0.7790** | 0.7777 | **62%** | 57 ms |
+| Served TF-IDF (model only) | scikit-learn | 16,622 + aug. | 0.8712 | **0.8782** | 0.8717 | 38% | 0.8 ms |
+| Served TF-IDF + ITIL cues (production on Render) | scikit-learn | 16,622 + aug. | 0.8549 | **0.8635** | 0.8565 | **79%** | 0.8 ms |
 
-P50 end-to-end latency is ~0.8 ms per ticket. The dataset is long-form and synthetic, and its labels
-do not consistently follow ITIL (e.g. "recurring crash, find the root cause" is frequently labelled
-*Incident*). The ITIL cues trade ~1.5 points of Macro-F1 on that synthetic split for a large gain on
-short, real-world-style tickets. Set `inference.itil_cue_weight: 0` in `configs/config.yaml` to disable them.
-The hand-written sets are small, so treat those numbers as indicative rather than precise.
+Latency is single-ticket (batch size 1) on a shared 4-vCPU GitHub runner, so treat it as relative.
 
-### Historical Quick-Mode Comparison
+**Per-class precision / recall** (P / R):
 
-> [!NOTE]
-> All metrics below reflect **actual runs on the identical held-out test split** (45 samples across 4 classes) in this environment (Intel CPU, Python 3.14, PyTorch 2.14.1+cpu). No placeholders or synthetic evaluations are used.
-
-### Held-Out Test Set Performance
-
-| Architecture | Training Mode | Accuracy | Macro-F1 | Weighted-F1 | P50 Latency (ms) | P95 Latency (ms) | Throughput (req/s) |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Baseline (TF-IDF + Logistic Regression)** | Quick (210 train / 45 test) | **0.6667** | **0.6206** | **0.6616** | **0.79 ms** | **1.00 ms** | **1,428.57 req/s** |
-| **Transformer (DistilBERT + LoRA / PEFT)** | Quick (1 epoch, 1.09% trainable) | 0.4444 | 0.3273 | 0.3816 | 13.32 ms | 14.92 ms | 74.46 req/s |
-
-### Per-Class Performance Breakdown (Baseline Model)
-
-| Class | Precision | Recall | F1-Score | Test Support |
+| Model | Change | Incident | Problem | Request |
 | :--- | :---: | :---: | :---: | :---: |
-| **Change** | 1.0000 | 0.4000 | 0.5714 | 5 |
-| **Incident** | 0.6667 | 0.6667 | 0.6667 | 18 |
-| **Problem** | 0.3000 | 0.3333 | 0.3158 | 9 |
-| **Request** | 0.8667 | 1.0000 | 0.9286 | 13 |
-| **Macro Average** | **0.7083** | **0.6000** | **0.6206** | **45** |
-| **Weighted Average** | **0.6881** | **0.6667** | **0.6616** | **45** |
+| TF-IDF + LR | 0.95 / 0.95 | 0.80 / 0.78 | 0.60 / 0.62 | 0.99 / 0.99 |
+| Keras CNN | 0.95 / 0.93 | 0.81 / 0.65 | 0.51 / 0.71 | 0.98 / 0.99 |
+| DistilBERT + LoRA | 0.94 / 0.96 | 0.71 / 0.85 | 0.54 / 0.34 | 0.98 / 0.98 |
+| Served TF-IDF + ITIL cues | 0.95 / 0.95 | 0.86 / 0.79 | 0.65 / 0.74 | 0.98 / 0.99 |
 
-### Key Trade-Offs & Architectural Insights
-1. **Inference Latency:** The TF-IDF baseline delivers sub-millisecond CPU inference (~0.79 ms P50, >1,400 req/s), making it exceptionally suitable for real-time edge processing and high-volume preliminary triage.
-2. **Contextual Semantic Generalization:** DistilBERT with PEFT/LoRA trains only **741,124 parameters** (1.09% of the 67.7M backbone parameters). In `quick` mode (1 epoch on 210 samples), it serves as a lightweight functional pipeline check. For production deployment with larger subsets (`--mode full`), LoRA provides the capacity to disambiguate complex syntactic paraphrasing without the latency overhead of full-model fine-tuning.
+### Error analysis (precision / recall)
+
+- **Incident ↔ Problem accounts for 92-95% of all errors** for every model (e.g. TF-IDF: 303 Incident→Problem and
+  279 Problem→Incident of 618 errors). Both describe something broken; ITIL separates them by recurrence /
+  root-cause intent, which the synthetic labels apply inconsistently. Request and Change are near-perfect.
+- **Confidence gate:** at the 0.80 threshold, auto-accepted tickets are far more precise than overall accuracy
+  (TF-IDF 96.0% precision at 53% coverage; DistilBERT 94.4% at 55%; served model 96.4% at 65%), so the gate
+  routes the ambiguous Incident/Problem tickets to human review. See `reports/figures/precision_coverage.png`.
+- **Length parity (bias check):** Macro-F1 is stable for tickets under 100 words (0.85 / 0.84 for TF-IDF,
+  0.78 / 0.78 for DistilBERT) and drops on the rarer 100-199-word tickets for the bag-of-words model (0.76),
+  while DistilBERT stays flat (0.77), see `error_analysis.md`.
+- **Real-world generalisation:** on the 24-ticket hand-written holdout (`data/fixtures/handwritten_holdout.json`,
+  never used for tuning), **DistilBERT + LoRA reaches 62% vs. 46% (Keras) and 33% (TF-IDF)** trained on the same
+  data: the transformer transfers best beyond the long-form synthetic style, while the bag-of-words models win
+  on the in-distribution test split. The production service closes that gap with the ITIL cue layer (79%).
+  The holdout is small, so treat these as indicative.
+
+### Training details
+
+| | TF-IDF + LR | Keras CNN | DistilBERT + LoRA |
+| :--- | :--- | :--- | :--- |
+| Features / backbone | word 1-2-grams, 80k max | 30k vocab, 256 tokens, 128-d embeddings | `distilbert-base-uncased`, 128 tokens |
+| Trainable parameters | linear | 3.9 M | 0.74 M of 67.7 M (1.09%) |
+| Optimisation | L-BFGS, C=4, balanced | Adam 1e-3, balanced class weights, early stopping (8 epochs) | AdamW 3e-4, linear warm-up, 3 epochs, best epoch kept (2) |
+| Validation Macro-F1 | 0.8103 | 0.7894 | 0.7922 |
+| Training time (4 vCPU) | 2 s | 73 s | 59 min |
+
+*Ablation:* LoRA on all six DistilBERT linear layers (r=16, 2.79% trainable) with a class-balanced loss
+overfit after epoch 1 (validation Macro-F1 0.789 → 0.769), so the lighter q/v adapter is used.
+
+### Serving model on Render (free plan)
+
+The Render deployment runs the served TF-IDF model plus the ITIL cue correction from
+[`itil_rules.py`](src/ticketlens/itil_rules.py) (the DistilBERT container needs ~430 MB at idle, too close to the 512 MB free-plan limit under load; it is served by
+[`Dockerfile.transformer`](Dockerfile.transformer) instead). The cues trade ~1.5 Macro-F1 points on the
+synthetic split for a large gain on the hand-written holdout (38% → 79%). Set `inference.itil_cue_weight: 0`
+to disable them. The hand-written sets are small, so treat those numbers as indicative.
 
 ---
 
@@ -363,10 +398,23 @@ always routed to `Needs Review`.
 TicketLens features automated feature attribution and dataset-level auditing generated via `python -m ticketlens.explain`:
 
 ### Top Driving N-Grams (TF-IDF Coefficients & SHAP Attributions)
-- **`Change`:** Top positive indicators include `"request"`, `"current"`, `"upgrade"`, `"analytics tools"`.
-- **`Incident`:** Top positive indicators include `"system"`, `"issue"`, `"the issue"`, `"unexpected"`, `"resolve"`, `"restarting"`.
-- **`Problem`:** Top positive indicators include `"server"`, `"been"`, `"problem with"`, `"crashes"`, `"have been"`.
-- **`Request`:** Top positive indicators include `"on"`, `"you"`, `"could you"`, `"information on"`, `"inquiry"`, `"strategies"`.
+
+From [`reports/top_features_per_class.json`](reports/top_features_per_class.json) and
+[`reports/shap_summary.json`](reports/shap_summary.json) (SHAP `LinearExplainer` on the served model):
+- **`Change`:** `update`, `enhance`, `improve`, `revise`, `boost`, `enhancement`.
+- **`Incident`:** `problem`, `incident`, `breach`, `issue`, `has`, `issues`.
+- **`Problem`:** `problem`, `facing`, `issue`, `issues`, `problem with`, `despite`.
+- **`Request`:** `for`, `details`, `strategies`, `integrating`, `guidance`, `information`.
+
+The overlap of `problem` / `issue` between Incident and Problem explains the dominant confusion pair in the
+error analysis.
+
+### Bias Check
+
+[`reports/bias_and_fairness_audit.json`](reports/bias_and_fairness_audit.json) and the error analysis cover:
+class balance (Incident 39.7%, Request 29.0%, Problem 20.8%, Change 10.5%; imbalance 3.77:1, handled with
+class-balanced training), ticket-length profiles per class, performance parity by ticket length, and a PII scan
+of the raw text before redaction.
 
 ### Responsible AI & Privacy Considerations
 1. **PII Sanitization:** Enterprise IT tickets frequently contain customer emails, direct callback numbers, and internal IP addresses. TicketLens implements an upfront regex sanitization pipeline that replaces email strings with `[EMAIL]`, phone numbers with `[PHONE]`, and IP addresses with `[IP]`.
@@ -377,10 +425,27 @@ TicketLens features automated feature attribution and dataset-level auditing gen
 
 ## Docker Deployment
 
-To build and run TicketLens inside a containerized Linux environment:
+Two images are provided; both download the dataset during `docker build` (internet access to Hugging
+Face is required at build time).
 
-The image mirrors the Render setup: it installs only the lightweight serving stack and trains the
-TF-IDF model during `docker build` (internet access to Hugging Face is required at build time).
+### Serving the fine-tuned DistilBERT + LoRA model
+
+[`Dockerfile.transformer`](Dockerfile.transformer) serves the fine-tuned DistilBERT through the same FastAPI
+app. It installs CPU-only PyTorch, downloads the LoRA adapter published by the
+[Benchmark workflow](.github/workflows/benchmark.yml) (GitHub release `models`), bakes in the DistilBERT
+base weights so the container runs offline, and defaults `/predict` to the transformer (~430 MB RAM, measured in CI).
+
+```bash
+docker build -f Dockerfile.transformer -t ticketlens:transformer .
+docker run -p 8000:8000 --rm ticketlens:transformer
+curl -X POST http://localhost:8000/predict -H "Content-Type: application/json" \
+  -d '{"text": "VPN is down for the whole office since this morning"}'   # model_type: DistilBERT (PEFT / LoRA)
+```
+
+### Lightweight TF-IDF image (same as Render)
+
+[`Dockerfile`](Dockerfile) mirrors the Render setup: lightweight serving stack (no PyTorch) and the
+TF-IDF model trained during the build; runs in ~240 MB.
 
 ```bash
 # 1. Build the Docker container image (downloads the dataset and trains the serving model)
