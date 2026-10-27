@@ -408,7 +408,7 @@ The repository includes a ready-to-use [`render.yaml`](render.yaml) specificatio
 5. Render will automatically detect `render.yaml` and configure:
    - **Service Name:** `ticketlens`
    - **Environment:** `Python 3.11+`
-   - **Build Command:** `pip install --upgrade pip && pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.train_baseline --mode all --require-dataset`
+   - **Build Command:** `pip install --upgrade pip && pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.data --download-only --require-dataset && PYTHONPATH=src python -m ticketlens.train_baseline --mode all --require-dataset`
    - **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'`
    - **Health Check Path:** `/health`
 6. Click **Apply**. Render will deploy the application with live logging.
@@ -429,7 +429,8 @@ status and a hint during that time. Subsequent requests are instant.
 > **Why a separate `requirements-render.txt`?** Render's free plan has a 512 MB RAM limit. The full
 > `requirements.txt` pulls in PyTorch, Transformers, SHAP and plotting libraries, which alone exceed that
 > limit. The Render build installs only the lightweight serving stack and trains the TF-IDF + Logistic
-> Regression model during the build (~10 s, <450 MB peak), so the server binds `$PORT` within seconds
+> Regression model during the build (dataset download and training run as separate processes to keep
+> each step's peak memory low; ~1 minute total), so the server binds `$PORT` within seconds
 > and runs in ~220 MB.
 > Requests for the `transformer` model automatically fall back to the baseline when no fine-tuned
 > transformer artifacts are present.
@@ -447,7 +448,7 @@ If you configure the Web Service manually via Render UI:
    - **Branch:** `main`
    - **Build Command:**
      ```bash
-     pip install --upgrade pip && pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.train_baseline --mode all --require-dataset
+     pip install --upgrade pip && pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.data --download-only --require-dataset && PYTHONPATH=src python -m ticketlens.train_baseline --mode all --require-dataset
      ```
    - **Start Command:**
      ```bash

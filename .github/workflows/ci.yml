@@ -18,9 +18,9 @@ jobs:
     env:
       PYTHONPATH: src:.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11.9" # keep in sync with PYTHON_VERSION in render.yaml
           cache: pip
@@ -40,19 +40,24 @@ jobs:
           sys.exit(f"Heavy packages leaked into requirements-render.txt: {heavy}" if heavy else 0)
           EOF
 
-      - name: Render build step (download dataset + train baseline)
+      - name: Render build step (download dataset, then train baseline)
         env:
           TICKETLENS_ENV: production
         run: |
-          python - <<'EOF'
+          measure() {
+            python - "$@" <<'EOF'
           import resource, runpy, sys
-          sys.argv = ["train_baseline", "--mode", "all", "--require-dataset"]
-          runpy.run_module("ticketlens.train_baseline", run_name="__main__")
+          module, args = sys.argv[1], sys.argv[2:]
+          sys.argv = [module, *args]
+          runpy.run_module(module, run_name="__main__")
           peak_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
-          print(f"Build-step peak memory: {peak_mb:.0f} MB")
-          if peak_mb > 450:
-              print(f"::warning::Build-step peak memory {peak_mb:.0f} MB is higher than expected (~440 MB)")
+          print(f"::notice::{module} peak memory: {peak_mb:.0f} MB")
+          if peak_mb > 512:
+              sys.exit(f"::error::{module} peaked at {peak_mb:.0f} MB (> 512 MB)")
           EOF
+          }
+          measure ticketlens.data --download-only --require-dataset
+          measure ticketlens.train_baseline --mode all --require-dataset
           test -f artifacts/models/baseline/logistic_regression.joblib
 
       - name: Unit tests
@@ -75,7 +80,7 @@ jobs:
           curl -sf -X POST "http://127.0.0.1:$PORT/predict" -H "Content-Type: application/json" \
             -d '{"text":"send me last month'"'"'s invoice"}' | tee /dev/stderr | grep -q '"predicted_category":"Request"'
           RSS_MB=$(( $(ps -o rss= -p "$SERVER_PID") / 1024 ))
-          echo "Server RSS: ${RSS_MB} MB (Render free plan limit: 512 MB)"
+          echo "::notice::Server RSS: ${RSS_MB} MB (Render free plan limit: 512 MB)"
           kill "$SERVER_PID"
           test "$RSS_MB" -lt 400
 
@@ -88,7 +93,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build image
         run: docker build -t ticketlens:ci .
       - name: Run container and check health

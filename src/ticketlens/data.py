@@ -99,13 +99,17 @@ def load_raw_dataset(cfg: Dict[str, Any], use_fixture: bool = False, require_dat
             from datasets import load_dataset
             ds = load_dataset(dataset_name, split="train")
             ds = ds.select_columns([c for c in required if c in ds.column_names])
+
+            # Filter by language inside Arrow (memory-mapped) before converting to pandas
+            target_lang = cfg["dataset"].get("language", "en")
+            if "language" in ds.column_names and target_lang:
+                ds = ds.filter(
+                    lambda langs: [lang == target_lang for lang in langs],
+                    batched=True,
+                    input_columns=["language"],
+                )
             df = ds.to_pandas()
             del ds
-
-            # Filter by language if specified
-            target_lang = cfg["dataset"].get("language", "en")
-            if "language" in df.columns and target_lang:
-                df = df[df["language"] == target_lang].copy()
 
             # Cache locally
             df.to_parquet(local_cache_file, index=False)
@@ -263,7 +267,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Prepare dataset for TicketLens")
     parser.add_argument("--mode", choices=["quick", "full", "all"], default="quick", help="Execution mode")
     parser.add_argument("--fixture", action="store_true", help="Force synthetic fixture usage")
+    parser.add_argument(
+        "--download-only",
+        action="store_true",
+        help="Only download and cache the raw dataset (run as a separate build step to keep peak memory low)",
+    )
+    parser.add_argument("--require-dataset", action="store_true", help="Fail instead of falling back to the fixture")
     args = parser.parse_args()
 
     config = load_config()
-    get_dataset_splits(config, mode=args.mode, use_fixture=args.fixture)
+    if args.download_only:
+        raw = load_raw_dataset(config, use_fixture=args.fixture, require_dataset=args.require_dataset)
+        if args.require_dataset and len(raw) < MIN_REAL_DATASET_ROWS:
+            raise SystemExit(f"Downloaded only {len(raw)} rows (< {MIN_REAL_DATASET_ROWS}).")
+        logger.info("Raw dataset ready: %d rows.", len(raw))
+    else:
+        get_dataset_splits(config, mode=args.mode, use_fixture=args.fixture, require_dataset=args.require_dataset)
