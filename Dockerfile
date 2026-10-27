@@ -1,6 +1,6 @@
 # Production Dockerfile for TicketLens IT Ticket Classifier
 # Mirrors the Render setup: lightweight serving stack (no torch) and the TF-IDF model is
-# trained at image build time, so the container starts in seconds and runs in ~220 MB.
+# trained at image build time, so the container starts in seconds and runs in ~240 MB.
 # Compatible with Docker Desktop, AWS ECS, GCP Cloud Run, and Render (Docker runtime).
 FROM python:3.11-slim
 

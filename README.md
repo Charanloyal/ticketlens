@@ -435,7 +435,7 @@ status and a hint during that time. Subsequent requests are instant.
 > limit. The Render build installs only the lightweight serving stack and trains the TF-IDF + Logistic
 > Regression model during the build (`ticketlens.build` runs download, corpus preparation and training as separate processes to keep
 > each step's peak memory low; ~1 minute total), so the server binds `$PORT` within seconds
-> and runs in ~220 MB.
+> and runs in ~240 MB.
 > Requests for the `transformer` model automatically fall back to the baseline when no fine-tuned
 > transformer artifacts are present.
 

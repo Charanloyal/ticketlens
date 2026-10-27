@@ -11,7 +11,7 @@ services:
     # Install only the lightweight serving stack (no torch), then `ticketlens.build` downloads
     # the dataset, prepares the corpus and trains the TF-IDF model, each step in its own
     # process to keep peak memory low (CI enforces < 512 MB per step). The server then binds
-    # $PORT instantly and runs in ~220 MB, under the 512 MB free-plan limit.
+    # $PORT instantly and runs in ~240 MB, under the 512 MB free-plan limit.
     # The build FAILS (keeping the previous deploy live) if the Hugging Face dataset can't
     # be downloaded, instead of training on the tiny test fixture.
     buildCommand: "pip install --upgrade pip && pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.build"
