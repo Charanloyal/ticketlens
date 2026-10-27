@@ -3,6 +3,7 @@
 import json
 import logging
 import re
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import pandas as pd
@@ -56,10 +57,12 @@ def _required_columns(cfg: Dict[str, Any]) -> List[str]:
     return [cfg["dataset"]["target_column"], *cfg["dataset"]["text_columns"], "language"]
 
 
-def load_raw_dataset(cfg: Dict[str, Any], use_fixture: bool = False) -> pd.DataFrame:
+def load_raw_dataset(cfg: Dict[str, Any], use_fixture: bool = False, require_dataset: bool = False) -> pd.DataFrame:
     """
     Load dataset from Hugging Face or local parquet cache.
     Falls back to fixture file if internet is unavailable or use_fixture is True.
+    With require_dataset=True (production builds), a failed download raises instead of
+    silently training on the tiny fixture.
     """
     root = get_project_root()
     raw_dir = Path(cfg["paths"]["raw_data_dir"])
@@ -69,6 +72,8 @@ def load_raw_dataset(cfg: Dict[str, Any], use_fixture: bool = False) -> pd.DataF
     required = _required_columns(cfg)
 
     if use_fixture:
+        if require_dataset:
+            raise ValueError("use_fixture and require_dataset are mutually exclusive.")
         logger.info("Explicitly using synthetic test fixture: %s", fixtures_file)
         if not fixtures_file.exists():
             raise FileNotFoundError(f"Fixture not found at {fixtures_file}")
@@ -84,32 +89,46 @@ def load_raw_dataset(cfg: Dict[str, Any], use_fixture: bool = False) -> pd.DataF
         available = set(pq.read_schema(local_cache_file).names)
         return pd.read_parquet(local_cache_file, columns=[c for c in required if c in available])
 
-    # 2. Try loading from Hugging Face
+    # 2. Try loading from Hugging Face (with retries for transient network / rate-limit errors)
     dataset_name = cfg["dataset"]["name"]
-    logger.info("Downloading dataset '%s' from Hugging Face Hub...", dataset_name)
-    try:
-        from datasets import load_dataset
-        ds = load_dataset(dataset_name, split="train")
-        ds = ds.select_columns([c for c in required if c in ds.column_names])
-        df = ds.to_pandas()
-        del ds
+    attempts = 3 if require_dataset else 1
+    last_error: Optional[Exception] = None
+    for attempt in range(1, attempts + 1):
+        logger.info("Downloading dataset '%s' from Hugging Face Hub (attempt %d/%d)...", dataset_name, attempt, attempts)
+        try:
+            from datasets import load_dataset
+            ds = load_dataset(dataset_name, split="train")
+            ds = ds.select_columns([c for c in required if c in ds.column_names])
+            df = ds.to_pandas()
+            del ds
 
-        # Filter by language if specified
-        target_lang = cfg["dataset"].get("language", "en")
-        if "language" in df.columns and target_lang:
-            df = df[df["language"] == target_lang].copy()
+            # Filter by language if specified
+            target_lang = cfg["dataset"].get("language", "en")
+            if "language" in df.columns and target_lang:
+                df = df[df["language"] == target_lang].copy()
 
-        # Cache locally
-        df.to_parquet(local_cache_file, index=False)
-        logger.info("Cached %d rows to %s", len(df), local_cache_file)
-        return df
-    except Exception as e:
-        logger.warning("Failed to load dataset from Hugging Face (%s). Falling back to fixture.", e)
-        if fixtures_file.exists():
-            with open(fixtures_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            return pd.DataFrame(data)
-        raise RuntimeError("Could not load Hugging Face dataset and no fixture file exists.") from e
+            # Cache locally
+            df.to_parquet(local_cache_file, index=False)
+            logger.info("Cached %d rows to %s", len(df), local_cache_file)
+            return df
+        except Exception as e:  # noqa: BLE001 - any failure triggers retry / fallback
+            last_error = e
+            logger.warning("Failed to load dataset from Hugging Face: %s", e)
+            if attempt < attempts:
+                time.sleep(5 * attempt)
+
+    if require_dataset:
+        raise RuntimeError(
+            f"Could not download dataset '{dataset_name}' from Hugging Face and require_dataset is set. "
+            "Refusing to fall back to the tiny synthetic fixture."
+        ) from last_error
+
+    logger.warning("Falling back to synthetic fixture %s.", fixtures_file)
+    if fixtures_file.exists():
+        with open(fixtures_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return pd.DataFrame(data)
+    raise RuntimeError("Could not load Hugging Face dataset and no fixture file exists.") from last_error
 
 
 def preprocess_data(
@@ -219,11 +238,23 @@ def preprocess_data(
     return train_df, val_df, test_df, label2id
 
 
-def get_dataset_splits(cfg: Optional[Dict[str, Any]] = None, mode: str = "quick", use_fixture: bool = False) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, Dict[str, int]]:
+MIN_REAL_DATASET_ROWS = 1000
+
+
+def get_dataset_splits(
+    cfg: Optional[Dict[str, Any]] = None,
+    mode: str = "quick",
+    use_fixture: bool = False,
+    require_dataset: bool = False,
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, Dict[str, int]]:
     """Convenience helper to load raw and return preprocessed splits."""
     if cfg is None:
         cfg = load_config()
-    raw_df = load_raw_dataset(cfg, use_fixture=use_fixture)
+    raw_df = load_raw_dataset(cfg, use_fixture=use_fixture, require_dataset=require_dataset)
+    if require_dataset and len(raw_df) < MIN_REAL_DATASET_ROWS:
+        raise RuntimeError(
+            f"Loaded only {len(raw_df)} rows (< {MIN_REAL_DATASET_ROWS}); refusing to train a production model on it."
+        )
     return preprocess_data(raw_df, cfg, mode=mode)
 
 

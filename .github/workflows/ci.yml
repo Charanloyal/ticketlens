@@ -1,0 +1,104 @@
+# Mirrors the Render free-plan deploy (render.yaml) so a broken deploy is caught before Render sees it.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render-simulation:
+    name: Render build + serve (Python 3.11, slim deps)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: src:.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11.9" # keep in sync with PYTHON_VERSION in render.yaml
+          cache: pip
+          cache-dependency-path: requirements-render.txt
+
+      - name: Install serving dependencies (same as Render)
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements-render.txt
+          pip install "pytest>=8.0.0" "httpx>=0.27.0"
+
+      - name: Assert heavy ML stack is NOT installed
+        run: |
+          python - <<'EOF'
+          import importlib.util, sys
+          heavy = [m for m in ("torch", "transformers", "peft", "shap") if importlib.util.find_spec(m)]
+          sys.exit(f"Heavy packages leaked into requirements-render.txt: {heavy}" if heavy else 0)
+          EOF
+
+      - name: Render build step (download dataset + train baseline)
+        env:
+          TICKETLENS_ENV: production
+        run: |
+          python - <<'EOF'
+          import resource, runpy, sys
+          sys.argv = ["train_baseline", "--mode", "all", "--require-dataset"]
+          runpy.run_module("ticketlens.train_baseline", run_name="__main__")
+          peak_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
+          print(f"Build-step peak memory: {peak_mb:.0f} MB")
+          if peak_mb > 450:
+              print(f"::warning::Build-step peak memory {peak_mb:.0f} MB is higher than expected (~440 MB)")
+          EOF
+          test -f artifacts/models/baseline/logistic_regression.joblib
+
+      - name: Unit tests
+        run: pytest -q -rs
+
+      - name: Serve like Render and smoke test
+        env:
+          TICKETLENS_ENV: production
+          PORT: "10000"
+        run: |
+          python -m uvicorn main:app --host 0.0.0.0 --port "$PORT" --proxy-headers --forwarded-allow-ips='*' > server.log 2>&1 &
+          SERVER_PID=$!
+          for i in $(seq 1 30); do
+            curl -sf "http://127.0.0.1:$PORT/health" && break
+            sleep 1
+          done
+          echo
+          curl -sf "http://127.0.0.1:$PORT/health" | tee /dev/stderr | grep -q '"ready":true'
+          curl -sf "http://127.0.0.1:$PORT/" | grep -q "TicketLens"
+          curl -sf -X POST "http://127.0.0.1:$PORT/predict" -H "Content-Type: application/json" \
+            -d '{"text":"send me last month'"'"'s invoice"}' | tee /dev/stderr | grep -q '"predicted_category":"Request"'
+          RSS_MB=$(( $(ps -o rss= -p "$SERVER_PID") / 1024 ))
+          echo "Server RSS: ${RSS_MB} MB (Render free plan limit: 512 MB)"
+          kill "$SERVER_PID"
+          test "$RSS_MB" -lt 400
+
+      - name: Server log
+        if: always()
+        run: cat server.log || true
+
+  docker:
+    name: Docker image build + health check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t ticketlens:ci .
+      - name: Run container and check health
+        run: |
+          docker run -d --name tl -p 8000:8000 ticketlens:ci
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/health && break; sleep 1; done
+          echo
+          curl -sf http://127.0.0.1:8000/health | grep -q '"ready":true'
+          curl -sf -X POST http://127.0.0.1:8000/predict -H "Content-Type: application/json" \
+            -d '{"text":"The website is down right now and customers cannot check out"}' | grep -q '"predicted_category"'
+      - name: Container log
+        if: always()
+        run: docker logs tl || true

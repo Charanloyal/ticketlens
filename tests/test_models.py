@@ -2,12 +2,9 @@
 
 import numpy as np
 import pytest
-import torch
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
-from transformers import AutoTokenizer
-from ticketlens.train_transformer import TicketDataset
 
 
 def test_baseline_fit_and_predict():
@@ -45,7 +42,12 @@ def test_metric_calculations():
 
 
 def test_ticket_dataset_tokenization():
-    tokenizer = AutoTokenizer.from_pretrained("distilbert/distilbert-base-uncased")
+    # The transformer stack is not installed in the lightweight Render/CI serving environment.
+    pytest.importorskip("torch")
+    transformers = pytest.importorskip("transformers")
+    from ticketlens.train_transformer import TicketDataset
+
+    tokenizer = transformers.AutoTokenizer.from_pretrained("distilbert/distilbert-base-uncased")
     texts = ["VPN issue", "Need access"]
     labels = [0, 1]
 

@@ -16,6 +16,11 @@ def get_project_root() -> Path:
     return current_file.parent.parent.parent
 
 
+def is_production() -> bool:
+    """True when TICKETLENS_ENV=production (set in render.yaml)."""
+    return os.environ.get("TICKETLENS_ENV", "").strip().lower() == "production"
+
+
 def get_device() -> Union["torch.device", str]:
     """Detect and return CUDA device if available, otherwise CPU.
 

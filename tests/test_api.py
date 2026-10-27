@@ -29,6 +29,14 @@ def test_health_endpoint(test_client: TestClient):
     assert "models_loaded" in data
 
 
+def test_health_returns_503_when_no_model(monkeypatch, test_client: TestClient):
+    import ticketlens.api as api_module
+    monkeypatch.setattr(api_module, "predictor", None)
+    response = test_client.get("/health")
+    assert response.status_code == 503
+    assert response.json() == {"status": "degraded", "ready": False, "models_loaded": []}
+
+
 def test_metadata_endpoint(test_client: TestClient):
     response = test_client.get("/metadata")
     assert response.status_code == 200

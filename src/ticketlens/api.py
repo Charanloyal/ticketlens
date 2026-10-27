@@ -14,7 +14,7 @@ _PROJECT_ROOT = _SRC_DIR.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-from fastapi import Depends, FastAPI, HTTPException, Request, Security, status
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, Security, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.security import APIKeyHeader
@@ -72,7 +72,8 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    # The API uses an X-API-Key header, not cookies, so credentialed CORS is unnecessary.
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -166,12 +167,19 @@ async def root(request: Request, format: Optional[str] = None):
     return HTMLResponse("<h1>TicketLens API Operational</h1><p>Visit <a href='/docs'>/docs</a> for Swagger UI.</p>")
 
 
-@app.get("/health", response_model=HealthResponse, tags=["Monitoring"])
-async def health_check():
-    """Health check endpoint confirming service status and loaded model availability."""
+@app.get(
+    "/health",
+    response_model=HealthResponse,
+    tags=["Monitoring"],
+    responses={503: {"model": HealthResponse, "description": "No model loaded (deploy should not go live)"}},
+)
+async def health_check(response: Response):
+    """Health check: 200 when a model is ready, 503 otherwise so Render keeps the previous deploy live."""
     global predictor
     is_ready = predictor is not None and predictor.is_ready
     loaded = predictor.get_loaded_models() if predictor else []
+    if not is_ready:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
     return HealthResponse(
         status="healthy" if is_ready else "degraded",
         ready=is_ready,

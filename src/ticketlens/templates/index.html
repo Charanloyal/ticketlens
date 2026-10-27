@@ -200,6 +200,40 @@
       50% { opacity: 0.4; transform: scale(1.25); }
     }
 
+    .status-pill.waking {
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.35);
+      color: #fbbf24;
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.15);
+    }
+
+    .status-pill.degraded {
+      background: rgba(244, 63, 94, 0.12);
+      border-color: rgba(244, 63, 94, 0.35);
+      color: #fb7185;
+      box-shadow: 0 0 15px rgba(244, 63, 94, 0.15);
+    }
+
+    .status-pill.waking .status-dot { background: #fbbf24; box-shadow: 0 0 8px #fbbf24; }
+    .status-pill.degraded .status-dot { background: #fb7185; box-shadow: 0 0 8px #fb7185; }
+
+    .segment-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .wake-hint {
+      display: none;
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #7dd3fc;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
     .nav-btn {
       padding: 8px 16px;
       border-radius: 10px;
@@ -861,9 +895,9 @@
         </div>
       </div>
       <div class="nav-actions">
-        <div class="status-pill">
+        <div id="statusPill" class="status-pill waking" role="status" aria-live="polite">
           <span class="status-dot"></span>
-          <span>System Operational</span>
+          <span id="statusText">Connecting…</span>
         </div>
         <a href="/docs" target="_blank" class="nav-btn">Swagger API</a>
         <a href="https://github.com/Charanloyal/ticketlens" target="_blank" class="nav-btn primary">GitHub Repository</a>
@@ -927,10 +961,10 @@
               <span>Inference Backbone</span>
             </div>
             <div class="segmented-control">
-              <button id="btnModelTransformer" class="segment-btn active" onclick="pickModel('transformer')">
+              <button id="btnModelTransformer" class="segment-btn" onclick="pickModel('transformer')">
                 <span>DistilBERT (LoRA / PEFT)</span>
               </button>
-              <button id="btnModelBaseline" class="segment-btn" onclick="pickModel('baseline')">
+              <button id="btnModelBaseline" class="segment-btn active" onclick="pickModel('baseline')">
                 <span>TF-IDF + Logistic Reg (~0.8ms)</span>
               </button>
             </div>
@@ -942,7 +976,7 @@
               <input type="checkbox" id="checkPii" checked>
               <span>Auto-scrub PII (emails, phone numbers, IPs)</span>
             </label>
-            <span style="font-size: 11px; color: var(--text-muted);">Confidence Gate: 80%</span>
+            <span id="textGate" style="font-size: 11px; color: var(--text-muted);">Confidence Gate: 80%</span>
           </div>
 
           <!-- Submit -->
@@ -950,6 +984,9 @@
             <span id="submitIcon">⚡</span>
             <span id="submitLabel">Classify & Triage Ticket</span>
           </button>
+          <div id="wakeHint" class="wake-hint" role="status">
+            ⏳ The server is waking up (Render free tier sleeps after inactivity). The first request can take 30–60 seconds — later ones are instant.
+          </div>
         </div>
 
         <!-- Output Column -->
@@ -983,7 +1020,7 @@
                 <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Predicted IT Category</div>
                 <div id="textCategory" class="category-title Incident">Incident</div>
                 <div class="category-meta">
-                  <span id="textModelUsed">DistilBERT (PEFT / LoRA)</span>
+                  <span id="textModelUsed">TF-IDF + Logistic Regression</span>
                   <span>•</span>
                   <span id="textRoutingAction" style="color: #38bdf8;">Direct L2 Assignment</span>
                 </div>
@@ -1065,57 +1102,67 @@
           <h2>Held-Out Test Set Performance & Latency Benchmark</h2>
           <span class="card-badge">Strict Evaluation</span>
         </div>
-        <p style="color: var(--text-secondary); font-size: 14px;">Evaluated on the held-out test split of <code>Tobi-Bueck/customer-support-tickets</code>:</p>
+        <p style="color: var(--text-secondary); font-size: 14px;">The live service runs the <strong>TF-IDF + Logistic Regression</strong> model (trained on the full <code>Tobi-Bueck/customer-support-tickets</code> English set) with the ITIL cue correction. Measured on the held-out test split (3,563 tickets) and on hand-written tickets:</p>
 
         <table class="data-table">
           <thead>
             <tr>
-              <th>Model Architecture</th>
+              <th>Model</th>
               <th>Accuracy</th>
               <th>Macro-F1</th>
               <th>Weighted-F1</th>
-              <th>P50 Latency</th>
-              <th>P95 Latency</th>
-              <th>Throughput</th>
+              <th>Hand-written holdout</th>
+              <th>Auto-accept precision</th>
+              <th>P50 / P95 Latency</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><strong>TF-IDF + Logistic Regression</strong></td>
-              <td>0.6667</td>
-              <td><span style="color: var(--cyan-glow); font-weight: 700;">0.6206</span></td>
-              <td>0.6616</td>
-              <td>0.79 ms</td>
-              <td>1.00 ms</td>
-              <td>1,428.57 req/s</td>
+              <td><strong>TF-IDF + LR + ITIL cues</strong> <span class="card-badge" style="margin-left: 6px;">Live</span></td>
+              <td>0.8532</td>
+              <td><span style="color: var(--cyan-glow); font-weight: 700;">0.8618</span></td>
+              <td>0.8549</td>
+              <td><span style="color: var(--cyan-glow); font-weight: 700;">79%</span></td>
+              <td>94.8% (66% auto-accepted)</td>
+              <td>0.81 / 1.73 ms</td>
             </tr>
             <tr>
-              <td><strong>DistilBERT (LoRA / PEFT)</strong></td>
+              <td><strong>TF-IDF + LR (model only)</strong></td>
+              <td>0.8695</td>
+              <td>0.8763</td>
+              <td>0.8700</td>
+              <td>38%</td>
+              <td>96.4% (65% auto-accepted)</td>
+              <td>0.76 / 1.74 ms</td>
+            </tr>
+            <tr>
+              <td><strong>DistilBERT (LoRA / PEFT)</strong> <span style="font-size: 11px; color: var(--text-muted);">historical quick run, not deployed</span></td>
               <td>0.4444</td>
-              <td><span style="color: var(--cyan-glow); font-weight: 700;">0.3273</span></td>
+              <td>0.3273</td>
               <td>0.3816</td>
-              <td>13.32 ms</td>
-              <td>14.92 ms</td>
-              <td>74.46 req/s</td>
+              <td>&mdash;</td>
+              <td>&mdash;</td>
+              <td>13.32 / 14.92 ms</td>
             </tr>
           </tbody>
         </table>
+        <p style="color: var(--text-muted); font-size: 12px; margin-top: 10px;">The dataset is long-form and synthetic; ITIL cues trade ~1.5 Macro-F1 points on it for a large gain on short, real-world tickets (24-ticket holdout, so treat as indicative). DistilBERT needs &gt;512 MB RAM and is not served on the Render free tier.</p>
 
         <div class="figures-deck">
           <div class="deck-card">
-            <img src="/reports/figures/confusion_matrix_baseline.png" alt="Confusion Matrix Baseline" onerror="this.style.display='none'">
-            <h4 style="font-size: 14px; margin-bottom: 4px;">TF-IDF Baseline Confusion Matrix</h4>
-            <p style="font-size: 12px; color: var(--text-muted);">High precision and recall across Request and Incident classes</p>
+            <img src="/reports/figures/confusion_matrix_baseline.png" alt="Confusion Matrix of the live model" onerror="this.style.display='none'">
+            <h4 style="font-size: 14px; margin-bottom: 4px;">Live Model Confusion Matrix</h4>
+            <p style="font-size: 12px; color: var(--text-muted);">3,563 held-out tickets; most errors are Incident &harr; Problem</p>
           </div>
           <div class="deck-card">
             <img src="/reports/figures/confusion_matrix_transformer.png" alt="Confusion Matrix Transformer" onerror="this.style.display='none'">
             <h4 style="font-size: 14px; margin-bottom: 4px;">DistilBERT LoRA Confusion Matrix</h4>
-            <p style="font-size: 12px; color: var(--text-muted);">Contextual semantic attribution across technical categories</p>
+            <p style="font-size: 12px; color: var(--text-muted);">Historical quick-mode run (45 test tickets)</p>
           </div>
           <div class="deck-card">
             <img src="/reports/figures/model_comparison_f1.png" alt="Model Comparison F1" onerror="this.style.display='none'">
             <h4 style="font-size: 14px; margin-bottom: 4px;">F1-Score Comparison</h4>
-            <p style="font-size: 12px; color: var(--text-muted);">Side-by-side metric comparison on test split</p>
+            <p style="font-size: 12px; color: var(--text-muted);">Historical quick-mode comparison (45 test tickets)</p>
           </div>
         </div>
       </div>
@@ -1238,15 +1285,23 @@
           </div>
           <div class="telemetry-tile">
             <span>Build Command</span>
-            <strong style="font-size: 12px;">pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.train_baseline --mode all</strong>
+            <strong style="font-size: 12px;">pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.train_baseline --mode all --require-dataset</strong>
           </div>
           <div class="telemetry-tile">
             <span>Start Command</span>
-            <strong style="font-size: 12px;">uvicorn main:app --host 0.0.0.0 --port $PORT</strong>
+            <strong style="font-size: 12px;">uvicorn main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'</strong>
           </div>
           <div class="telemetry-tile">
             <span>Health Check Path</span>
             <strong>/health</strong>
+          </div>
+          <div class="telemetry-tile">
+            <span>Environment Variables</span>
+            <strong style="font-size: 12px;">PYTHON_VERSION=3.11.9 · TICKETLENS_ENV=production · PYTHONPATH=src:.</strong>
+          </div>
+          <div class="telemetry-tile">
+            <span>Instance Type</span>
+            <strong style="font-size: 12px;">Free (512 MB) — server runs in ~220 MB; sleeps when idle</strong>
           </div>
         </div>
 
@@ -1255,7 +1310,7 @@
   - type: web
     name: ticketlens
     runtime: python
-    buildCommand: "pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.train_baseline --mode all"
+    buildCommand: "pip install --upgrade pip && pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.train_baseline --mode all --require-dataset"
     startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'"
     healthCheckPath: /health
     envVars:
@@ -1268,7 +1323,44 @@
   </div>
 
   <script>
-    let currentModel = 'transformer';
+    let currentModel = 'baseline';
+    let availableModels = [];
+
+    function setStatus(state, text) {
+      const pill = document.getElementById('statusPill');
+      pill.className = 'status-pill' + (state === 'ok' ? '' : ' ' + state);
+      document.getElementById('statusText').textContent = text;
+    }
+
+    function applyMetadata(meta) {
+      availableModels = meta.models_available || [];
+      const tBtn = document.getElementById('btnModelTransformer');
+      const hasTransformer = availableModels.includes('transformer');
+      tBtn.disabled = !hasTransformer;
+      tBtn.title = hasTransformer ? '' : 'DistilBERT needs more than 512 MB RAM and is not deployed on this server';
+      pickModel(availableModels.includes(meta.default_model) ? meta.default_model : (availableModels[0] || 'baseline'));
+      const gate = Math.round((meta.confidence_threshold || 0.8) * 100);
+      document.getElementById('textGate').textContent = `Confidence Gate: ${gate}%`;
+    }
+
+    // Free Render instances sleep when idle; keep probing until the server is awake.
+    async function initServerState(attempt = 0) {
+      try {
+        const health = await fetch('/health', { cache: 'no-store' });
+        const body = await health.json();
+        if (health.ok && body.ready) {
+          setStatus('ok', 'System Operational');
+        } else {
+          setStatus('degraded', 'Degraded: no model loaded');
+        }
+        const meta = await fetch('/metadata', { cache: 'no-store' });
+        if (meta.ok) applyMetadata(await meta.json());
+      } catch (err) {
+        setStatus('waking', 'Waking up server…');
+        if (attempt < 20) setTimeout(() => initServerState(attempt + 1), 3000);
+        else setStatus('degraded', 'Server unreachable');
+      }
+    }
 
     const samplePresets = {
       incident: "VPN connection drops intermittently with TLS handshake timeout 504 while working remotely on gateway node.",
@@ -1286,6 +1378,7 @@
     }
 
     function pickModel(model) {
+      if (model === 'transformer' && document.getElementById('btnModelTransformer').disabled) return;
       currentModel = model;
       if (model === 'transformer') {
         document.getElementById('btnModelTransformer').classList.add('active');
@@ -1332,6 +1425,9 @@
       icon.innerText = "⏳";
 
       const startMs = performance.now();
+      const wakeTimer = setTimeout(() => {
+        document.getElementById('wakeHint').style.display = 'block';
+      }, 3000);
 
       try {
         const payload = JSON.stringify({
@@ -1359,17 +1455,24 @@
         }
 
         if (!response.ok) {
-          const err = await response.json();
-          throw new Error(err.detail || "Prediction request failed.");
+          let detail = `Server responded with HTTP ${response.status}.`;
+          try {
+            const err = await response.json();
+            detail = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail || err);
+          } catch (_) { /* non-JSON error page, e.g. from the hosting proxy */ }
+          throw new Error(detail);
         }
 
         const data = await response.json();
         const latency = Math.round(performance.now() - startMs);
 
+        setStatus('ok', 'System Operational');
         renderClassificationOutput(data, latency);
       } catch (err) {
         alert("Inference Error: " + err.message);
       } finally {
+        clearTimeout(wakeTimer);
+        document.getElementById('wakeHint').style.display = 'none';
         btn.disabled = false;
         label.innerText = "Classify & Triage Ticket";
         icon.innerText = "⚡";
@@ -1449,6 +1552,8 @@
         }
       }
     }
+
+    initServerState();
   </script>
 </body>
 </html>

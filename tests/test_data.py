@@ -1,5 +1,7 @@
 """Tests for data preprocessing, validation, PII redaction, and splitting."""
 
+import copy
+
 import pandas as pd
 import pytest
 from ticketlens.data import (
@@ -41,12 +43,15 @@ def test_validate_schema_raises_missing_column():
         validate_schema(df, ["subject", "type"])
 
 
-def test_preprocess_data_splits_and_leakage(sample_ticket_fixture, base_config):
+def test_preprocess_data_splits_and_leakage(sample_ticket_fixture, base_config, tmp_path):
     df = pd.DataFrame(sample_ticket_fixture)
     # Duplicate some rows to verify deduplication
     df_with_duplicates = pd.concat([df, df.iloc[:2]], ignore_index=True)
 
-    train_df, val_df, test_df, label2id = preprocess_data(df_with_duplicates, base_config, mode="quick")
+    # Write processed splits to a temp dir so the real data/processed splits aren't overwritten.
+    cfg = copy.deepcopy(base_config)
+    cfg["paths"]["processed_data_dir"] = str(tmp_path)
+    train_df, val_df, test_df, label2id = preprocess_data(df_with_duplicates, cfg, mode="quick")
 
     # Verify no overlap between train and test texts
     train_texts = set(train_df["text"])

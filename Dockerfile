@@ -1,39 +1,42 @@
-# Multi-stage production Dockerfile for TicketLens IT Ticket Classifier
-# Compatible with Docker Desktop, AWS ECS, GCP Cloud Run, and Render Cloud
-FROM python:3.11-slim as base
+# Production Dockerfile for TicketLens IT Ticket Classifier
+# Mirrors the Render setup: lightweight serving stack (no torch) and the TF-IDF model is
+# trained at image build time, so the container starts in seconds and runs in ~220 MB.
+# Compatible with Docker Desktop, AWS ECS, GCP Cloud Run, and Render (Docker runtime).
+FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app/src \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONPATH=/app/src:/app \
+    TICKETLENS_ENV=production \
     PORT=8000
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    build-essential \
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+COPY requirements-render.txt .
+RUN pip install --upgrade pip && pip install -r requirements-render.txt
 
-COPY src/ /app/src/
 COPY configs/ /app/configs/
 COPY data/fixtures/ /app/data/fixtures/
-COPY pyproject.toml setup.py main.py ./
+COPY reports/ /app/reports/
+COPY src/ /app/src/
+COPY main.py ./
 
-RUN pip install --no-cache-dir .
+# Download the dataset and train the serving model during the build (fails the build if the
+# dataset can't be downloaded), then drop the raw data to keep the image small.
+RUN python -m ticketlens.train_baseline --mode all --require-dataset \
+    && rm -rf /app/data/raw /app/data/processed /root/.cache/huggingface
 
-RUN useradd -m -u 1000 appuser && \
-    mkdir -p /app/artifacts/models /app/reports /app/data && \
-    chown -R appuser:appuser /app
-
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT}"]
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips='*'"]

@@ -125,3 +125,60 @@ def test_short_text_variants_use_subject_and_first_sentence(base_config):
     assert "Please send the March invoice." in texts
     assert "VPN is down for everyone." in texts
     assert len(texts) == len(labels)
+
+
+def _offline_cfg(base_config, tmp_path):
+    cfg = copy.deepcopy(base_config)
+    cfg["paths"]["raw_data_dir"] = str(tmp_path / "raw")
+    cfg["paths"]["processed_data_dir"] = str(tmp_path / "processed")
+    return cfg
+
+
+def _failing_hf(monkeypatch):
+    import datasets
+    import ticketlens.data as data_module
+
+    def boom(*args, **kwargs):
+        raise ConnectionError("simulated Hugging Face outage")
+
+    monkeypatch.setattr(datasets, "load_dataset", boom)
+    monkeypatch.setattr(data_module.time, "sleep", lambda s: None)
+
+
+def test_require_dataset_refuses_fixture_fallback(monkeypatch, base_config, tmp_path):
+    from ticketlens.data import get_dataset_splits
+
+    _failing_hf(monkeypatch)
+    with pytest.raises(RuntimeError, match="Refusing to fall back"):
+        get_dataset_splits(_offline_cfg(base_config, tmp_path), mode="all", require_dataset=True)
+
+
+def test_without_require_dataset_falls_back_to_fixture(monkeypatch, base_config, tmp_path):
+    from ticketlens.data import load_raw_dataset
+
+    _failing_hf(monkeypatch)
+    df = load_raw_dataset(_offline_cfg(base_config, tmp_path))
+    assert 0 < len(df) < 100
+
+
+def test_require_dataset_rejects_tiny_dataset(base_config, tmp_path):
+    from ticketlens.data import get_dataset_splits
+
+    cfg = _offline_cfg(base_config, tmp_path)
+    (tmp_path / "raw").mkdir()
+    tiny = pd.DataFrame({"type": ["Incident"] * 10, "subject": ["s"] * 10, "body": ["body text here"] * 10, "language": ["en"] * 10})
+    tiny.to_parquet(tmp_path / "raw" / "customer_support_tickets_en.parquet", index=False)
+    with pytest.raises(RuntimeError, match="refusing to train"):
+        get_dataset_splits(cfg, mode="all", require_dataset=True)
+
+
+def test_production_never_trains_at_startup(monkeypatch, base_config, tmp_path):
+    import ticketlens.train_baseline as tb
+    from ticketlens.predict import TicketPredictor
+
+    cfg = copy.deepcopy(base_config)
+    cfg["paths"]["model_dir"] = str(tmp_path / "models")
+    monkeypatch.setenv("TICKETLENS_ENV", "production")
+    monkeypatch.setattr(tb, "train_baseline_model", lambda *a, **k: pytest.fail("must not train in production"))
+    predictor = TicketPredictor(cfg=cfg)
+    assert not predictor.is_ready

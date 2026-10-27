@@ -64,13 +64,16 @@ def train_baseline_model(
     cfg: Optional[Dict[str, Any]] = None,
     mode: str = "quick",
     use_fixture: bool = False,
+    require_dataset: bool = False,
 ) -> Dict[str, Any]:
     """Train TF-IDF + Logistic Regression baseline pipeline and save artifacts."""
     if cfg is None:
         cfg = load_config()
 
     logger.info("Preparing data splits for baseline training (mode=%s)...", mode)
-    train_df, val_df, test_df, label2id = get_dataset_splits(cfg, mode=mode, use_fixture=use_fixture)
+    train_df, val_df, test_df, label2id = get_dataset_splits(
+        cfg, mode=mode, use_fixture=use_fixture, require_dataset=require_dataset
+    )
     id2label = {v: k for k, v in label2id.items()}
 
     b_cfg = cfg["baseline"]
@@ -172,6 +175,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train baseline model")
     parser.add_argument("--mode", choices=["quick", "full", "all"], default="quick", help="Execution mode ('all' trains on every row)")
     parser.add_argument("--fixture", action="store_true", help="Force synthetic fixture usage")
+    parser.add_argument(
+        "--require-dataset",
+        action="store_true",
+        help="Fail instead of falling back to the synthetic fixture when the real dataset can't be loaded (production builds)",
+    )
     args = parser.parse_args()
 
-    train_baseline_model(mode=args.mode, use_fixture=args.fixture)
+    train_baseline_model(mode=args.mode, use_fixture=args.fixture, require_dataset=args.require_dataset)

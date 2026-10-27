@@ -34,7 +34,8 @@ ITIL_CUES: Dict[str, List[Tuple[str, "re.Pattern[str]"]]] = {
     ],
     "Problem": [
         ("root cause", re.compile(r"\b(root[- ]cause|underlying cause|permanent fix|find out why|investigate why|why)\b", _FLAGS)),
-        ("recurrence", re.compile(r"\b(recurring|recurrent|recur|keeps?|kept|repeatedly|again|persistent|ongoing|intermittent(ly)?|frequent(ly)?|consistently|every (day|week|month|monday|morning|few))\b", _FLAGS)),
+        # "intermittent" is deliberately excluded: an intermittent symptom of a live outage is an Incident.
+        ("recurrence", re.compile(r"\b(recurring|recurrent|recur|keeps?|kept|repeatedly|again|persistent|ongoing|frequent(ly)?|consistently|every (day|week|month|monday|morning|few))\b", _FLAGS)),
         ("multiple occurrences", re.compile(r"\b((\d+|two|three|four|five|several|multiple)(th)? times|(second|third|fourth|fifth) time|multiple incidents|pattern)\b", _FLAGS)),
     ],
     "Change": [

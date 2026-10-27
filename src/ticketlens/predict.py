@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 import joblib
-from ticketlens.config import get_device, load_config
+from ticketlens.config import get_device, is_production, load_config
 from ticketlens.data import clean_and_redact_text
 from ticketlens.itil_rules import CUE_WEIGHT, apply_itil_cues
 from ticketlens.language import detect_non_english
@@ -41,12 +41,21 @@ class TicketPredictor:
         # Load Baseline
         baseline_dir = Path(self.cfg["paths"]["model_dir"]) / "baseline"
         if not (baseline_dir / "logistic_regression.joblib").exists():
-            try:
-                from ticketlens.train_baseline import train_baseline_model
-                logger.info("No baseline artifacts found. Bootstrapping quick baseline model for immediate serving...")
-                train_baseline_model(self.cfg, mode="quick", use_fixture=False)
-            except Exception as e:
-                logger.warning("Could not auto-bootstrap baseline model: %s", e)
+            if is_production():
+                # Training at startup is what previously exhausted the 512 MB Render instance;
+                # production models must be built during the build step instead.
+                logger.error(
+                    "No baseline artifacts in %s and TICKETLENS_ENV=production: not training at startup. "
+                    "Run 'python -m ticketlens.train_baseline --mode all --require-dataset' in the build step.",
+                    baseline_dir,
+                )
+            else:
+                try:
+                    from ticketlens.train_baseline import train_baseline_model
+                    logger.info("No baseline artifacts found. Bootstrapping quick baseline model for immediate serving...")
+                    train_baseline_model(self.cfg, mode="quick", use_fixture=False)
+                except Exception as e:
+                    logger.warning("Could not auto-bootstrap baseline model: %s", e)
 
         if (baseline_dir / "logistic_regression.joblib").exists():
             try:

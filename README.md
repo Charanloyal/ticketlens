@@ -5,7 +5,8 @@
 [![Dataset License: CC BY-NC 4.0](https://img.shields.io/badge/Dataset-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 [![Framework: FastAPI](https://img.shields.io/badge/Framework-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
 [![Transformer: DistilBERT](https://img.shields.io/badge/Model-DistilBERT%20LoRA-orange.svg)](https://huggingface.co/distilbert/distilbert-base-uncased)
-[![Tests: Pytest](https://img.shields.io/badge/Tests-49-brightgreen.svg)](https://docs.pytest.org/)
+[![CI](https://github.com/Charanloyal/ticketlens/actions/workflows/ci.yml/badge.svg)](https://github.com/Charanloyal/ticketlens/actions/workflows/ci.yml)
+[![Tests: Pytest](https://img.shields.io/badge/Tests-54-brightgreen.svg)](https://docs.pytest.org/)
 
 **TicketLens** is an end-to-end IT service desk ticket classification and triage engine with an ultra-sleek, dark-mode glassmorphic web dashboard. It classifies IT issues into standard ITIL categories (**Incident**, **Request**, **Problem**, **Change**) and evaluates a traditional sub-millisecond **TF-IDF + Logistic Regression** baseline against a contextual **DistilBERT** sequence classification transformer fine-tuned with **PEFT / LoRA**.
 
@@ -131,6 +132,7 @@ TicketLens/
 ├── requirements.txt              # Full dependency set (training, transformer, explainability)
 ├── requirements-render.txt       # Lightweight serving dependencies for Render (no torch)
 ├── render.yaml                   # Render Blueprint (free plan)
+├── .github/workflows/ci.yml      # CI: replays the Render build, tests, smoke test, Docker build
 ├── LICENSE                       # Apache License 2.0
 ├── pyproject.toml                # Build configuration and pytest options
 ├── Makefile                      # Cross-platform development targets
@@ -176,7 +178,7 @@ pip install -e .
 
 | Command | Purpose |
 | :--- | :--- |
-| `pytest tests/ -v` | Run the complete automated test suite (49 tests) |
+| `pytest tests/ -v` | Run the complete automated test suite (54 tests) |
 | `python -m ticketlens.train_baseline --mode quick` | Train TF-IDF baseline model (quick verification run) |
 | `python -m ticketlens.train_baseline --mode all` | Train the serving TF-IDF model on the full dataset (~10 s, as on Render) |
 | `python scripts/evaluate_handwritten.py` | Score the serving model on hand-written tickets (with/without ITIL cues) |
@@ -203,13 +205,13 @@ subject/first-sentence augmentations from the training split), followed by the I
 
 | Evaluation set | Model only: Accuracy / Macro-F1 | With ITIL cues: Accuracy / Macro-F1 | Correct when auto-accepted (with cues) |
 | :--- | :---: | :---: | :---: |
-| Held-out dataset test split (3,563 tickets) | 0.8695 / 0.8763 | 0.8507 / 0.8600 | 94.5% (66% auto-accepted) |
-| Hand-written holdout (24 tickets, never used for tuning) | 0.38 / 0.41 | **0.79 / 0.80** | 100% (50% auto-accepted) |
-| Hand-written development set (48 tickets) | 0.52 / 0.51 | 0.79 / 0.79 | 100% (42% auto-accepted) |
+| Held-out dataset test split (3,563 tickets) | 0.8695 / 0.8763 | 0.8532 / 0.8618 | 94.8% (66% auto-accepted) |
+| Hand-written holdout (24 tickets, never used for tuning) | 0.38 / 0.41 | **0.79 / 0.80** | 100% (46% auto-accepted) |
+| Hand-written development set (48 tickets) | 0.52 / 0.51 | 0.79 / 0.79 | 100% (40% auto-accepted) |
 
 P50 end-to-end latency is ~0.8 ms per ticket. The dataset is long-form and synthetic, and its labels
 do not consistently follow ITIL (e.g. "recurring crash, find the root cause" is frequently labelled
-*Incident*). The ITIL cues trade ~1.6 points of Macro-F1 on that synthetic split for a large gain on
+*Incident*). The ITIL cues trade ~1.5 points of Macro-F1 on that synthetic split for a large gain on
 short, real-world-style tickets. Set `inference.itil_cue_weight: 0` in `configs/config.yaml` to disable them.
 The hand-written sets are small, so treat those numbers as indicative rather than precise.
 
@@ -375,8 +377,11 @@ TicketLens features automated feature attribution and dataset-level auditing gen
 
 To build and run TicketLens inside a containerized Linux environment:
 
+The image mirrors the Render setup: it installs only the lightweight serving stack and trains the
+TF-IDF model during `docker build` (internet access to Hugging Face is required at build time).
+
 ```bash
-# 1. Build the Docker container image
+# 1. Build the Docker container image (downloads the dataset and trains the serving model)
 docker build -t ticketlens:latest .
 
 # 2. Run the container on port 8000
@@ -403,11 +408,23 @@ The repository includes a ready-to-use [`render.yaml`](render.yaml) specificatio
 5. Render will automatically detect `render.yaml` and configure:
    - **Service Name:** `ticketlens`
    - **Environment:** `Python 3.11+`
-   - **Build Command:** `pip install --upgrade pip && pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.train_baseline --mode all`
+   - **Build Command:** `pip install --upgrade pip && pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.train_baseline --mode all --require-dataset`
    - **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'`
    - **Health Check Path:** `/health`
 6. Click **Apply**. Render will deploy the application with live logging.
 7. *(Optional)* To protect `/predict`, add `TICKETLENS_API_KEY` under the service's **Environment** tab.
+
+**Deploy safety nets**
+- `--require-dataset` makes the build **fail** if the Hugging Face dataset can't be downloaded, instead of
+  silently training on the 8-ticket test fixture. A failed build leaves the previous deploy live.
+- `/health` returns **503** when no model is loaded, so Render never routes traffic to a broken deploy.
+- With `TICKETLENS_ENV=production` the app never trains at startup (which would exceed 512 MB).
+- The [CI workflow](.github/workflows/ci.yml) replays the exact Render build on Python 3.11, runs the tests,
+  boots the server, smoke-tests `/health` and `/predict`, and fails if the server uses more than 400 MB.
+
+**Free plan behaviour:** free web services sleep after ~15 minutes without traffic. The first visit then
+takes roughly 30–60 seconds while Render wakes the service; the dashboard shows a "Waking up server…"
+status and a hint during that time. Subsequent requests are instant.
 
 > **Why a separate `requirements-render.txt`?** Render's free plan has a 512 MB RAM limit. The full
 > `requirements.txt` pulls in PyTorch, Transformers, SHAP and plotting libraries, which alone exceed that
@@ -430,7 +447,7 @@ If you configure the Web Service manually via Render UI:
    - **Branch:** `main`
    - **Build Command:**
      ```bash
-     pip install --upgrade pip && pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.train_baseline --mode all
+     pip install --upgrade pip && pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.train_baseline --mode all --require-dataset
      ```
    - **Start Command:**
      ```bash
@@ -454,10 +471,16 @@ If you configure the Web Service manually via Render UI:
   - **Resolution:** Run `pip install -e .` inside the active virtual environment to install the project package in editable mode.
 - **Issue:** Render deploy fails with `Out of memory (used over 512Mi)` / `No open ports detected`
   - **Resolution:** Make sure the service uses `requirements-render.txt` (not `requirements.txt`) and the build command from `render.yaml`. Installing PyTorch/Transformers or training at startup exceeds the free-plan memory limit.
+- **Issue:** Render build fails with `Refusing to fall back to the tiny synthetic fixture`
+  - **Resolution:** The Hugging Face dataset download failed (network issue or rate limit). The previous deploy stays live; click **Manual Deploy → Deploy latest commit** to retry.
+- **Issue:** Render deploy fails its health check / `/health` returns `503`
+  - **Resolution:** No model artifacts were found at startup. Check the build log for the `Baseline validation: Macro-F1=...` line; the build command must include the `train_baseline` step.
+- **Issue:** The live site takes ~30–60 s to respond to the first request
+  - **Resolution:** Expected on Render's free plan (the service sleeps when idle). Upgrade to a paid instance for always-on serving.
 - **Issue:** `CUDA not detected / Using CPU`
   - **Resolution:** `TicketLens` automatically detects whether CUDA is available and selects `cuda` when present, gracefully falling back to `cpu` without configuration changes.
 - **Issue:** `Hugging Face download timeout or offline environment`
-  - **Resolution:** The system automatically falls back to `data/fixtures/synthetic_tickets.json` when the Hugging Face Hub is unreachable, allowing offline development and testing.
+  - **Resolution:** For local development the system falls back to `data/fixtures/synthetic_tickets.json` when the Hugging Face Hub is unreachable. Production builds pass `--require-dataset`, which fails instead.
 
 ---
 

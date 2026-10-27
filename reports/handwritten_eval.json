@@ -5,7 +5,7 @@
       "tickets": 48,
       "accuracy": 0.7917,
       "macro_f1": 0.793,
-      "auto_accept_rate": 0.4167,
+      "auto_accept_rate": 0.3958,
       "auto_accept_precision": 1.0,
       "errors": [
         {
@@ -74,7 +74,7 @@
       "tickets": 24,
       "accuracy": 0.7917,
       "macro_f1": 0.796,
-      "auto_accept_rate": 0.5,
+      "auto_accept_rate": 0.4583,
       "auto_accept_precision": 1.0,
       "errors": [
         {

@@ -10,12 +10,12 @@
     "Problem",
     "Request"
   ],
-  "training_duration_seconds": 6.8545,
+  "training_duration_seconds": 9.2559,
   "validation_accuracy": 0.8554,
   "validation_macro_f1": 0.8622,
   "validation_weighted_f1": 0.8554,
-  "latency_p50_ms": 0.334,
-  "latency_p95_ms": 0.482,
+  "latency_p50_ms": 0.384,
+  "latency_p95_ms": 1.013,
   "classification_report": {
     "Change": {
       "precision": 0.9603174603174603,
