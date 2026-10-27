@@ -144,8 +144,8 @@ class MetadataResponse(BaseModel):
     auth_required: bool
 
 
-@app.get("/", response_class=HTMLResponse, tags=["General"])
-@app.get("/demo", response_class=HTMLResponse, tags=["General"])
+@app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse, tags=["General"])
+@app.api_route("/demo", methods=["GET", "HEAD"], response_class=HTMLResponse, tags=["General"])
 async def root(request: Request, format: Optional[str] = None):
     """Serve the interactive TicketLens live demo dashboard, or JSON status if requested."""
     accept_header = request.headers.get("accept", "")
@@ -167,8 +167,9 @@ async def root(request: Request, format: Optional[str] = None):
     return HTMLResponse("<h1>TicketLens API Operational</h1><p>Visit <a href='/docs'>/docs</a> for Swagger UI.</p>")
 
 
-@app.get(
+@app.api_route(
     "/health",
+    methods=["GET", "HEAD"],
     response_model=HealthResponse,
     tags=["Monitoring"],
     responses={503: {"model": HealthResponse, "description": "No model loaded (deploy should not go live)"}},

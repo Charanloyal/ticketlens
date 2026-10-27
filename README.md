@@ -8,7 +8,7 @@
 [![Keras](https://img.shields.io/badge/Baseline-TensorFlow%20%2F%20Keras-FF6F00.svg)](https://keras.io/)
 [![Benchmark](https://github.com/Charanloyal/ticketlens/actions/workflows/benchmark.yml/badge.svg)](https://github.com/Charanloyal/ticketlens/actions/workflows/benchmark.yml)
 [![CI](https://github.com/Charanloyal/ticketlens/actions/workflows/ci.yml/badge.svg)](https://github.com/Charanloyal/ticketlens/actions/workflows/ci.yml)
-[![Tests: Pytest](https://img.shields.io/badge/Tests-62-brightgreen.svg)](https://docs.pytest.org/)
+[![Tests: Pytest](https://img.shields.io/badge/Tests-63-brightgreen.svg)](https://docs.pytest.org/)
 
 **TicketLens** is an end-to-end IT service desk ticket classification and triage engine with an ultra-sleek, dark-mode glassmorphic web dashboard. It classifies IT issues into standard ITIL categories (**Incident**, **Request**, **Problem**, **Change**) by fine-tuning a pre-trained **DistilBERT** with **LoRA (Hugging Face Transformers + PEFT, PyTorch)** and benchmarking it on **macro-F1** against a **TF-IDF + Logistic Regression** baseline and a **Keras (TensorFlow) CNN** baseline, all scored on the identical held-out test set.
 
@@ -189,7 +189,7 @@ pip install -e .
 
 | Command | Purpose |
 | :--- | :--- |
-| `pytest tests/ -v` | Run the complete automated test suite (62 tests) |
+| `pytest tests/ -v` | Run the complete automated test suite (63 tests) |
 | `python -m ticketlens.train_baseline --mode quick` | Train TF-IDF baseline model (quick verification run) |
 | `python -m ticketlens.build` | Production build exactly as on Render: download dataset, prepare corpus, train serving model (each step in its own process) |
 | `python -m ticketlens.train_baseline --mode all` | Train the serving TF-IDF model on the full dataset in a single process (local development) |
@@ -224,11 +224,11 @@ selection; the served TF-IDF model uses the whole training split.
 
 | Model | Framework | Train tickets | Accuracy | **Macro-F1** | Weighted-F1 | Hand-written holdout (24) | P50 latency |
 | :--- | :--- | ---: | :---: | :---: | :---: | :---: | ---: |
-| TF-IDF + Logistic Regression | scikit-learn | 7,000 | 0.8266 | **0.8352** | 0.8270 | 33% | 0.8 ms |
-| Keras CNN (TextVectorization + Embedding + Conv1D) | TensorFlow / Keras | 7,000 | 0.7884 | **0.8095** | 0.7932 | 46% | 7.7 ms |
-| DistilBERT + LoRA (r=8, q/v, 1.09% trainable) | PyTorch + HF Transformers + PEFT | 7,000 | 0.7920 | **0.7790** | 0.7777 | **62%** | 57 ms |
-| Served TF-IDF (model only) | scikit-learn | 16,622 + aug. | 0.8712 | **0.8782** | 0.8717 | 38% | 0.8 ms |
-| Served TF-IDF + ITIL cues (production on Render) | scikit-learn | 16,622 + aug. | 0.8549 | **0.8635** | 0.8565 | **79%** | 0.8 ms |
+| TF-IDF + Logistic Regression | scikit-learn | 7,000 | 0.8266 | **0.8352** | 0.8270 | 33.3% | 0.8 ms |
+| Keras CNN (TextVectorization + Embedding + Conv1D) | TensorFlow / Keras | 7,000 | 0.7884 | **0.8095** | 0.7932 | 45.8% | 7.7 ms |
+| DistilBERT + LoRA (r=8, q/v, 1.09% trainable) | PyTorch + HF Transformers + PEFT | 7,000 | 0.7920 | **0.7790** | 0.7777 | **62.5%** | 57 ms |
+| Served TF-IDF (model only) | scikit-learn | 16,622 + aug. | 0.8712 | **0.8782** | 0.8717 | 37.5% | 0.8 ms |
+| Served TF-IDF + ITIL cues (production on Render) | scikit-learn | 16,622 + aug. | 0.8549 | **0.8635** | 0.8565 | **79.2%** | 0.8 ms |
 
 Latency is single-ticket (batch size 1) on a shared 4-vCPU GitHub runner, so treat it as relative.
 
@@ -253,9 +253,9 @@ Latency is single-ticket (batch size 1) on a shared 4-vCPU GitHub runner, so tre
   0.78 / 0.78 for DistilBERT) and drops on the rarer 100-199-word tickets for the bag-of-words model (0.76),
   while DistilBERT stays flat (0.77), see `error_analysis.md`.
 - **Real-world generalisation:** on the 24-ticket hand-written holdout (`data/fixtures/handwritten_holdout.json`,
-  never used for tuning), **DistilBERT + LoRA reaches 62% vs. 46% (Keras) and 33% (TF-IDF)** trained on the same
+  never used for tuning), **DistilBERT + LoRA reaches 62.5% vs. 45.8% (Keras) and 33.3% (TF-IDF)** trained on the same
   data: the transformer transfers best beyond the long-form synthetic style, while the bag-of-words models win
-  on the in-distribution test split. The production service closes that gap with the ITIL cue layer (79%).
+  on the in-distribution test split. The production service closes that gap with the ITIL cue layer (79.2%).
   The holdout is small, so treat these as indicative.
 
 ### Training details
@@ -276,7 +276,7 @@ overfit after epoch 1 (validation Macro-F1 0.789 → 0.769), so the lighter q/v 
 The Render deployment runs the served TF-IDF model plus the ITIL cue correction from
 [`itil_rules.py`](src/ticketlens/itil_rules.py) (the DistilBERT container needs ~430 MB at idle, too close to the 512 MB free-plan limit under load; it is served by
 [`Dockerfile.transformer`](Dockerfile.transformer) instead). The cues trade ~1.5 Macro-F1 points on the
-synthetic split for a large gain on the hand-written holdout (38% → 79%). Set `inference.itil_cue_weight: 0`
+synthetic split for a large gain on the hand-written holdout (37.5% → 79.2%). Set `inference.itil_cue_weight: 0`
 to disable them. The hand-written sets are small, so treat those numbers as indicative.
 
 ---

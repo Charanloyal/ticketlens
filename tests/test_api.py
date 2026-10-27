@@ -29,6 +29,14 @@ def test_health_endpoint(test_client: TestClient):
     assert "models_loaded" in data
 
 
+def test_head_requests_supported_for_uptime_monitors(test_client: TestClient):
+    # Render's wake-up page and uptime monitors (e.g. UptimeRobot) probe with HEAD.
+    for path in ("/", "/demo", "/health"):
+        response = test_client.head(path)
+        assert response.status_code == 200, path
+        assert response.content == b""
+
+
 def test_health_returns_503_when_no_model(monkeypatch, test_client: TestClient):
     import ticketlens.api as api_module
     monkeypatch.setattr(api_module, "predictor", None)

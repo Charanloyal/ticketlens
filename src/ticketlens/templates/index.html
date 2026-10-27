@@ -1342,7 +1342,7 @@
     }
 
     const samplePresets = {
-      incident: "VPN connection drops intermittently with TLS handshake timeout 504 while working remotely on gateway node.",
+      incident: "VPN gateway outage: remote users cannot connect right now, TLS handshake timeout 504 on the gateway node.",
       request: "Please grant read-only SQL query access to the PostgreSQL analytics database for the newly onboarded business intelligence analyst.",
       problem: "Root cause investigation: recurring memory leak and socket exhaustion in the authentication microservice under heavy load.",
       change: "Scheduled maintenance: Rolling update of Kubernetes worker nodes from v1.28 to v1.29 and firewall rule adjustment."
@@ -1548,7 +1548,7 @@
         body.replaceChildren();
         for (const m of models) {
           const tr = document.createElement('tr');
-          const hw = m.handwritten ? `${Math.round(m.handwritten.accuracy * 100)}%` : '—';
+          const hw = m.handwritten ? `${(m.handwritten.accuracy * 100).toFixed(1)}%` : '—';
           const cells = [m.model_name, m.train_samples ? m.train_samples.toLocaleString() : '—', fmt(m.accuracy),
                          fmt(m.macro_f1), fmt(m.weighted_f1), hw, m.latency ? `${m.latency.p50_ms} ms` : '—'];
           cells.forEach((c, i) => {
