@@ -40,24 +40,11 @@ jobs:
           sys.exit(f"Heavy packages leaked into requirements-render.txt: {heavy}" if heavy else 0)
           EOF
 
-      - name: Render build step (download dataset, then train baseline)
+      - name: Render build step (download, prepare corpus, train; each step must stay < 512 MB)
         env:
           TICKETLENS_ENV: production
         run: |
-          measure() {
-            python - "$@" <<'EOF'
-          import resource, runpy, sys
-          module, args = sys.argv[1], sys.argv[2:]
-          sys.argv = [module, *args]
-          runpy.run_module(module, run_name="__main__")
-          peak_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
-          print(f"::notice::{module} peak memory: {peak_mb:.0f} MB")
-          if peak_mb > 512:
-              sys.exit(f"::error::{module} peaked at {peak_mb:.0f} MB (> 512 MB)")
-          EOF
-          }
-          measure ticketlens.data --download-only --require-dataset
-          measure ticketlens.train_baseline --mode all --require-dataset
+          python -m ticketlens.build --max-peak-mb 512
           test -f artifacts/models/baseline/logistic_regression.joblib
 
       - name: Unit tests

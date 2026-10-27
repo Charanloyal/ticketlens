@@ -46,7 +46,7 @@ class TicketPredictor:
                 # production models must be built during the build step instead.
                 logger.error(
                     "No baseline artifacts in %s and TICKETLENS_ENV=production: not training at startup. "
-                    "Run 'python -m ticketlens.train_baseline --mode all --require-dataset' in the build step.",
+                    "Run 'python -m ticketlens.build' in the build step.",
                     baseline_dir,
                 )
             else:

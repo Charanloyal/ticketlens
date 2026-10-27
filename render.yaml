@@ -8,13 +8,13 @@ services:
     region: oregon
     plan: free
     autoDeploy: true
-    # Install only the lightweight serving stack (no torch), then download the dataset
-    # and train the TF-IDF model in two separate processes (each peaks well under the
-    # memory of the original torch build), so the server binds $PORT instantly and
-    # runs in ~220 MB, under the 512 MB free-plan limit.
-    # --require-dataset makes the build FAIL (keeping the previous deploy live) if the
-    # Hugging Face dataset can't be downloaded, instead of training on the tiny fixture.
-    buildCommand: "pip install --upgrade pip && pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.data --download-only --require-dataset && PYTHONPATH=src python -m ticketlens.train_baseline --mode all --require-dataset"
+    # Install only the lightweight serving stack (no torch), then `ticketlens.build` downloads
+    # the dataset, prepares the corpus and trains the TF-IDF model, each step in its own
+    # process to keep peak memory low (CI enforces < 512 MB per step). The server then binds
+    # $PORT instantly and runs in ~220 MB, under the 512 MB free-plan limit.
+    # The build FAILS (keeping the previous deploy live) if the Hugging Face dataset can't
+    # be downloaded, instead of training on the tiny test fixture.
+    buildCommand: "pip install --upgrade pip && pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.build"
     startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'"
     healthCheckPath: /health
     envVars:

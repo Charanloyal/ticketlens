@@ -3,24 +3,19 @@
 import argparse
 import json
 import logging
-import re
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional
 import joblib
 import numpy as np
-import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report, f1_score
 from ticketlens.config import load_config
-from ticketlens.data import clean_and_redact_text, get_dataset_splits
+from ticketlens.data import build_baseline_corpus, load_baseline_corpus, short_text_variants  # noqa: F401 (re-export)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("ticketlens.train_baseline")
-
-_SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
-_HTML_BREAK = re.compile(r"<br\s*/?>", re.IGNORECASE)
 
 
 def build_vectorizer(b_cfg: Dict[str, Any]) -> TfidfVectorizer:
@@ -34,47 +29,31 @@ def build_vectorizer(b_cfg: Dict[str, Any]) -> TfidfVectorizer:
     )
 
 
-def short_text_variants(train_df: pd.DataFrame, cfg: Dict[str, Any]) -> Tuple[List[str], List[int]]:
-    """Create subject-only and first-sentence samples so the model also learns from short, hand-written-style tickets.
-
-    Only derived from the training split, so validation/test data never leaks into training.
-    """
-    text_cols = cfg["dataset"]["text_columns"]
-    redact = cfg["dataset"].get("redact_pii", True)
-    texts: List[str] = []
-    labels: List[int] = []
-    subject_col, body_col = (text_cols + [None, None])[:2]
-
-    for _, row in train_df.iterrows():
-        candidates = []
-        if subject_col and isinstance(row.get(subject_col), str):
-            candidates.append(row[subject_col])
-        if body_col and isinstance(row.get(body_col), str):
-            body = _HTML_BREAK.sub(" ", row[body_col])
-            candidates.append(_SENTENCE_SPLIT.split(body.strip(), maxsplit=1)[0])
-        for candidate in candidates:
-            cleaned = clean_and_redact_text(candidate, redact_pii=redact)
-            if len(cleaned) > 8:
-                texts.append(cleaned)
-                labels.append(int(row["label"]))
-    return texts, labels
-
-
 def train_baseline_model(
     cfg: Optional[Dict[str, Any]] = None,
     mode: str = "quick",
     use_fixture: bool = False,
     require_dataset: bool = False,
+    from_corpus: bool = False,
 ) -> Dict[str, Any]:
-    """Train TF-IDF + Logistic Regression baseline pipeline and save artifacts."""
+    """Train TF-IDF + Logistic Regression baseline pipeline and save artifacts.
+
+    With from_corpus=True the pre-built corpus from 'python -m ticketlens.data --prepare-corpus' is used, so
+    this process never holds the raw dataset (keeps peak memory low on Render build machines).
+    """
     if cfg is None:
         cfg = load_config()
 
-    logger.info("Preparing data splits for baseline training (mode=%s)...", mode)
-    train_df, val_df, test_df, label2id = get_dataset_splits(
-        cfg, mode=mode, use_fixture=use_fixture, require_dataset=require_dataset
-    )
+    if from_corpus:
+        logger.info("Loading pre-built training corpus (mode=%s)...", mode)
+        corpus = load_baseline_corpus(cfg, expected_mode=mode)
+    else:
+        logger.info("Preparing data splits for baseline training (mode=%s)...", mode)
+        corpus = build_baseline_corpus(cfg, mode=mode, use_fixture=use_fixture, require_dataset=require_dataset)
+
+    label2id = corpus["label2id"]
     id2label = {v: k for k, v in label2id.items()}
+    val_texts = corpus["val_text"]
 
     b_cfg = cfg["baseline"]
     logger.info(
@@ -88,15 +67,8 @@ def train_baseline_model(
 
     # Fit vectorizer strictly on training set
     start_time = time.time()
-    train_texts = train_df["text"].tolist()
-    train_labels = train_df["label"].astype(int).tolist()
-    if b_cfg.get("augment_short_text", False):
-        extra_texts, extra_labels = short_text_variants(train_df, cfg)
-        logger.info("Short-text augmentation: added %d subject/first-sentence samples.", len(extra_texts))
-        train_texts += extra_texts
-        train_labels += extra_labels
-    X_train = vectorizer.fit_transform(train_texts)
-    y_train = np.array(train_labels)
+    X_train = vectorizer.fit_transform(corpus.pop("train_text"))
+    y_train = np.array(corpus.pop("train_label"))
 
     classifier = LogisticRegression(
         C=b_cfg.get("c_param", 1.0),
@@ -107,12 +79,13 @@ def train_baseline_model(
 
     logger.info("Fitting Logistic Regression classifier on %d training samples...", X_train.shape[0])
     classifier.fit(X_train, y_train)
+    del X_train, y_train
     training_duration_seconds = round(time.time() - start_time, 4)
     logger.info("Baseline training completed in %.3f seconds.", training_duration_seconds)
 
     # Validation evaluation
-    X_val = vectorizer.transform(val_df["text"])
-    y_val = val_df["label"].values
+    X_val = vectorizer.transform(val_texts)
+    y_val = np.array(corpus["val_label"])
     val_preds = classifier.predict(X_val)
     val_probs = classifier.predict_proba(X_val)
 
@@ -121,11 +94,18 @@ def train_baseline_model(
     val_weighted_f1 = float(f1_score(y_val, val_preds, average="weighted", zero_division=0))
 
     target_names = [id2label[i] for i in range(len(label2id))]
-    report_dict = classification_report(y_val, val_preds, target_names=target_names, output_dict=True, zero_division=0)
+    report_dict = classification_report(
+        y_val,
+        val_preds,
+        labels=list(range(len(label2id))),
+        target_names=target_names,
+        output_dict=True,
+        zero_division=0,
+    )
 
     # Benchmark validation latency
     latency_trials = []
-    sample_texts = val_df["text"].iloc[: min(50, len(val_df))].tolist()
+    sample_texts = val_texts[:50]
     for text in sample_texts:
         t0 = time.perf_counter()
         vec = vectorizer.transform([text])
@@ -138,9 +118,10 @@ def train_baseline_model(
     metrics = {
         "model_type": "TF-IDF + Logistic Regression",
         "mode": mode,
-        "train_samples": len(train_df),
-        "val_samples": len(val_df),
-        "test_samples": len(test_df),
+        "train_samples": corpus["n_train_tickets"],
+        "augmented_samples": corpus["n_augmented"],
+        "val_samples": len(val_texts),
+        "test_samples": corpus["test_size"],
         "classes": target_names,
         "training_duration_seconds": training_duration_seconds,
         "validation_accuracy": round(val_acc, 4),
@@ -180,6 +161,16 @@ if __name__ == "__main__":
         action="store_true",
         help="Fail instead of falling back to the synthetic fixture when the real dataset can't be loaded (production builds)",
     )
+    parser.add_argument(
+        "--from-corpus",
+        action="store_true",
+        help="Train from the corpus written by 'python -m ticketlens.data --prepare-corpus' (low-memory production build)",
+    )
     args = parser.parse_args()
 
-    train_baseline_model(mode=args.mode, use_fixture=args.fixture, require_dataset=args.require_dataset)
+    train_baseline_model(
+        mode=args.mode,
+        use_fixture=args.fixture,
+        require_dataset=args.require_dataset,
+        from_corpus=args.from_corpus,
+    )

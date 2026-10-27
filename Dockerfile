@@ -28,8 +28,7 @@ COPY main.py ./
 
 # Download the dataset and train the serving model during the build (fails the build if the
 # dataset can't be downloaded), then drop the raw data to keep the image small.
-RUN python -m ticketlens.data --download-only --require-dataset \
-    && python -m ticketlens.train_baseline --mode all --require-dataset \
+RUN python -m ticketlens.build \
     && rm -rf /app/data/raw /app/data/processed /root/.cache/huggingface
 
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app

@@ -182,3 +182,44 @@ def test_production_never_trains_at_startup(monkeypatch, base_config, tmp_path):
     monkeypatch.setattr(tb, "train_baseline_model", lambda *a, **k: pytest.fail("must not train in production"))
     predictor = TicketPredictor(cfg=cfg)
     assert not predictor.is_ready
+
+
+def _fixture_cfg(base_config, tmp_path):
+    cfg = copy.deepcopy(base_config)
+    for key, sub in (("raw_data_dir", "raw"), ("processed_data_dir", "processed"), ("model_dir", "models"), ("reports_dir", "reports")):
+        cfg["paths"][key] = str(tmp_path / sub)
+    return cfg
+
+
+def test_corpus_roundtrip_and_mode_check(base_config, tmp_path):
+    from ticketlens.data import build_baseline_corpus, load_baseline_corpus, save_baseline_corpus
+
+    cfg = _fixture_cfg(base_config, tmp_path)
+    corpus = build_baseline_corpus(cfg, mode="quick", use_fixture=True)
+    assert len(corpus["train_text"]) == len(corpus["train_label"]) >= corpus["n_train_tickets"]
+    save_baseline_corpus(cfg, corpus)
+    assert load_baseline_corpus(cfg, expected_mode="quick") == corpus
+    with pytest.raises(ValueError, match="mode"):
+        load_baseline_corpus(cfg, expected_mode="all")
+
+
+def test_train_from_corpus_matches_in_process_training(base_config, tmp_path):
+    from ticketlens.data import build_baseline_corpus, save_baseline_corpus
+    from ticketlens.train_baseline import train_baseline_model
+
+    cfg = _fixture_cfg(base_config, tmp_path)
+    in_process = train_baseline_model(cfg, mode="quick", use_fixture=True)
+    save_baseline_corpus(cfg, build_baseline_corpus(cfg, mode="quick", use_fixture=True))
+    from_corpus = train_baseline_model(cfg, mode="quick", from_corpus=True)
+    for key in ("validation_macro_f1", "validation_accuracy", "train_samples", "augmented_samples"):
+        assert in_process[key] == from_corpus[key]
+    assert (tmp_path / "models" / "baseline" / "logistic_regression.joblib").exists()
+
+
+def test_build_runs_steps_in_separate_processes():
+    from ticketlens.build import _steps
+
+    steps = _steps("all")
+    assert [name for name, _ in steps] == ["download dataset", "prepare training corpus", "train baseline model"]
+    assert all("--require-dataset" in args for _, args in steps[:2])
+    assert "--from-corpus" in steps[2][1]

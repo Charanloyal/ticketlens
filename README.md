@@ -6,7 +6,7 @@
 [![Framework: FastAPI](https://img.shields.io/badge/Framework-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
 [![Transformer: DistilBERT](https://img.shields.io/badge/Model-DistilBERT%20LoRA-orange.svg)](https://huggingface.co/distilbert/distilbert-base-uncased)
 [![CI](https://github.com/Charanloyal/ticketlens/actions/workflows/ci.yml/badge.svg)](https://github.com/Charanloyal/ticketlens/actions/workflows/ci.yml)
-[![Tests: Pytest](https://img.shields.io/badge/Tests-54-brightgreen.svg)](https://docs.pytest.org/)
+[![Tests: Pytest](https://img.shields.io/badge/Tests-57-brightgreen.svg)](https://docs.pytest.org/)
 
 **TicketLens** is an end-to-end IT service desk ticket classification and triage engine with an ultra-sleek, dark-mode glassmorphic web dashboard. It classifies IT issues into standard ITIL categories (**Incident**, **Request**, **Problem**, **Change**) and evaluates a traditional sub-millisecond **TF-IDF + Logistic Regression** baseline against a contextual **DistilBERT** sequence classification transformer fine-tuned with **PEFT / LoRA**.
 
@@ -108,6 +108,7 @@ TicketLens/
 │       ├── config.py             # Path resolution and CUDA/CPU auto-detection
 │       ├── data.py               # Data ingestion, schema validation, PII scrubbing, & splitting
 │       ├── train_baseline.py     # TF-IDF + Logistic Regression training
+│       ├── build.py              # Production build (download → corpus → train, one process each)
 │       ├── train_transformer.py  # DistilBERT sequence classification with PEFT / LoRA
 │       ├── evaluate.py           # Test set evaluation, metrics, and plotting
 │       ├── explain.py            # SHAP attribution and dataset bias audit
@@ -178,9 +179,10 @@ pip install -e .
 
 | Command | Purpose |
 | :--- | :--- |
-| `pytest tests/ -v` | Run the complete automated test suite (54 tests) |
+| `pytest tests/ -v` | Run the complete automated test suite (57 tests) |
 | `python -m ticketlens.train_baseline --mode quick` | Train TF-IDF baseline model (quick verification run) |
-| `python -m ticketlens.train_baseline --mode all` | Train the serving TF-IDF model on the full dataset (~10 s, as on Render) |
+| `python -m ticketlens.build` | Production build exactly as on Render: download dataset, prepare corpus, train serving model (each step in its own process) |
+| `python -m ticketlens.train_baseline --mode all` | Train the serving TF-IDF model on the full dataset in a single process (local development) |
 | `python scripts/evaluate_handwritten.py` | Score the serving model on hand-written tickets (with/without ITIL cues) |
 | `python -m ticketlens.train_transformer --mode quick` | Fine-tune DistilBERT (LoRA) model (quick verification run) |
 | `python -m ticketlens.evaluate` | Evaluate both models on held-out test set & generate figures |
@@ -408,14 +410,16 @@ The repository includes a ready-to-use [`render.yaml`](render.yaml) specificatio
 5. Render will automatically detect `render.yaml` and configure:
    - **Service Name:** `ticketlens`
    - **Environment:** `Python 3.11+`
-   - **Build Command:** `pip install --upgrade pip && pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.data --download-only --require-dataset && PYTHONPATH=src python -m ticketlens.train_baseline --mode all --require-dataset`
+   - **Build Command:** `pip install --upgrade pip && pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.build`
    - **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'`
    - **Health Check Path:** `/health`
 6. Click **Apply**. Render will deploy the application with live logging.
 7. *(Optional)* To protect `/predict`, add `TICKETLENS_API_KEY` under the service's **Environment** tab.
 
 **Deploy safety nets**
-- `--require-dataset` makes the build **fail** if the Hugging Face dataset can't be downloaded, instead of
+- `python -m ticketlens.build` runs dataset download, corpus preparation and training as separate processes,
+  so only one step's memory is resident at a time (CI fails if any step exceeds 512 MB).
+- The build **fails** (`--require-dataset`) if the Hugging Face dataset can't be downloaded, instead of
   silently training on the 8-ticket test fixture. A failed build leaves the previous deploy live.
 - `/health` returns **503** when no model is loaded, so Render never routes traffic to a broken deploy.
 - With `TICKETLENS_ENV=production` the app never trains at startup (which would exceed 512 MB).
@@ -429,7 +433,7 @@ status and a hint during that time. Subsequent requests are instant.
 > **Why a separate `requirements-render.txt`?** Render's free plan has a 512 MB RAM limit. The full
 > `requirements.txt` pulls in PyTorch, Transformers, SHAP and plotting libraries, which alone exceed that
 > limit. The Render build installs only the lightweight serving stack and trains the TF-IDF + Logistic
-> Regression model during the build (dataset download and training run as separate processes to keep
+> Regression model during the build (`ticketlens.build` runs download, corpus preparation and training as separate processes to keep
 > each step's peak memory low; ~1 minute total), so the server binds `$PORT` within seconds
 > and runs in ~220 MB.
 > Requests for the `transformer` model automatically fall back to the baseline when no fine-tuned
@@ -448,7 +452,7 @@ If you configure the Web Service manually via Render UI:
    - **Branch:** `main`
    - **Build Command:**
      ```bash
-     pip install --upgrade pip && pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.data --download-only --require-dataset && PYTHONPATH=src python -m ticketlens.train_baseline --mode all --require-dataset
+     pip install --upgrade pip && pip install -r requirements-render.txt && PYTHONPATH=src python -m ticketlens.build
      ```
    - **Start Command:**
      ```bash
@@ -481,7 +485,7 @@ If you configure the Web Service manually via Render UI:
 - **Issue:** `CUDA not detected / Using CPU`
   - **Resolution:** `TicketLens` automatically detects whether CUDA is available and selects `cuda` when present, gracefully falling back to `cpu` without configuration changes.
 - **Issue:** `Hugging Face download timeout or offline environment`
-  - **Resolution:** For local development the system falls back to `data/fixtures/synthetic_tickets.json` when the Hugging Face Hub is unreachable. Production builds pass `--require-dataset`, which fails instead.
+  - **Resolution:** For local development the system falls back to `data/fixtures/synthetic_tickets.json` when the Hugging Face Hub is unreachable. Production builds (`python -m ticketlens.build`) fail instead.
 
 ---
 

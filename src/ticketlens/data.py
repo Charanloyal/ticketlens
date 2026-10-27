@@ -1,5 +1,6 @@
 """Data loading, validation, preprocessing, and splitting pipeline for TicketLens."""
 
+import gzip
 import json
 import logging
 import re
@@ -243,6 +244,94 @@ def preprocess_data(
 
 
 MIN_REAL_DATASET_ROWS = 1000
+CORPUS_FILENAME = "baseline_corpus.json.gz"
+
+_SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
+_HTML_BREAK = re.compile(r"<br\s*/?>", re.IGNORECASE)
+
+
+def short_text_variants(train_df: pd.DataFrame, cfg: Dict[str, Any]) -> Tuple[List[str], List[int]]:
+    """Create subject-only and first-sentence samples so the model also learns from short, hand-written-style tickets.
+
+    Only derived from the training split, so validation/test data never leaks into training.
+    """
+    text_cols = cfg["dataset"]["text_columns"]
+    redact = cfg["dataset"].get("redact_pii", True)
+    texts: List[str] = []
+    labels: List[int] = []
+    subject_col, body_col = (text_cols + [None, None])[:2]
+
+    for _, row in train_df.iterrows():
+        candidates = []
+        if subject_col and isinstance(row.get(subject_col), str):
+            candidates.append(row[subject_col])
+        if body_col and isinstance(row.get(body_col), str):
+            body = _HTML_BREAK.sub(" ", row[body_col])
+            candidates.append(_SENTENCE_SPLIT.split(body.strip(), maxsplit=1)[0])
+        for candidate in candidates:
+            cleaned = clean_and_redact_text(candidate, redact_pii=redact)
+            if len(cleaned) > 8:
+                texts.append(cleaned)
+                labels.append(int(row["label"]))
+    return texts, labels
+
+
+def build_baseline_corpus(
+    cfg: Dict[str, Any],
+    mode: str = "quick",
+    use_fixture: bool = False,
+    require_dataset: bool = False,
+) -> Dict[str, Any]:
+    """Load, clean, split and (optionally) augment the data into plain text/label lists for baseline training."""
+    train_df, val_df, test_df, label2id = get_dataset_splits(
+        cfg, mode=mode, use_fixture=use_fixture, require_dataset=require_dataset
+    )
+    train_text = train_df["text"].tolist()
+    train_label = [int(v) for v in train_df["label"]]
+    n_augmented = 0
+    if cfg["baseline"].get("augment_short_text", False):
+        extra_text, extra_label = short_text_variants(train_df, cfg)
+        n_augmented = len(extra_text)
+        logger.info("Short-text augmentation: added %d subject/first-sentence samples.", n_augmented)
+        train_text += extra_text
+        train_label += extra_label
+    return {
+        "mode": mode,
+        "label2id": label2id,
+        "train_text": train_text,
+        "train_label": train_label,
+        "n_train_tickets": len(train_df),
+        "n_augmented": n_augmented,
+        "val_text": val_df["text"].tolist(),
+        "val_label": [int(v) for v in val_df["label"]],
+        "test_size": len(test_df),
+    }
+
+
+def corpus_path(cfg: Dict[str, Any]) -> Path:
+    return Path(cfg["paths"]["processed_data_dir"]) / CORPUS_FILENAME
+
+
+def save_baseline_corpus(cfg: Dict[str, Any], corpus: Dict[str, Any]) -> Path:
+    path = corpus_path(cfg)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with gzip.open(path, "wt", encoding="utf-8") as f:
+        json.dump(corpus, f)
+    logger.info("Saved baseline training corpus (%d train / %d val texts) to %s", len(corpus["train_text"]), len(corpus["val_text"]), path)
+    return path
+
+
+def load_baseline_corpus(cfg: Dict[str, Any], expected_mode: Optional[str] = None) -> Dict[str, Any]:
+    path = corpus_path(cfg)
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Training corpus not found at {path}. Run 'python -m ticketlens.data --prepare-corpus' first."
+        )
+    with gzip.open(path, "rt", encoding="utf-8") as f:
+        corpus = json.load(f)
+    if expected_mode and corpus.get("mode") != expected_mode:
+        raise ValueError(f"Corpus at {path} was prepared with mode={corpus.get('mode')!r}, expected {expected_mode!r}.")
+    return corpus
 
 
 def get_dataset_splits(
@@ -273,6 +362,11 @@ if __name__ == "__main__":
         help="Only download and cache the raw dataset (run as a separate build step to keep peak memory low)",
     )
     parser.add_argument("--require-dataset", action="store_true", help="Fail instead of falling back to the fixture")
+    parser.add_argument(
+        "--prepare-corpus",
+        action="store_true",
+        help=f"Clean, split and augment the data and write data/processed/{CORPUS_FILENAME} for 'train_baseline --from-corpus'",
+    )
     args = parser.parse_args()
 
     config = load_config()
@@ -281,5 +375,10 @@ if __name__ == "__main__":
         if args.require_dataset and len(raw) < MIN_REAL_DATASET_ROWS:
             raise SystemExit(f"Downloaded only {len(raw)} rows (< {MIN_REAL_DATASET_ROWS}).")
         logger.info("Raw dataset ready: %d rows.", len(raw))
+    elif args.prepare_corpus:
+        save_baseline_corpus(
+            config,
+            build_baseline_corpus(config, mode=args.mode, use_fixture=args.fixture, require_dataset=args.require_dataset),
+        )
     else:
         get_dataset_splits(config, mode=args.mode, use_fixture=args.fixture, require_dataset=args.require_dataset)

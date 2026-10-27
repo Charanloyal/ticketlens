@@ -2,6 +2,7 @@
   "model_type": "TF-IDF + Logistic Regression",
   "mode": "all",
   "train_samples": 16622,
+  "augmented_samples": 31221,
   "val_samples": 3562,
   "test_samples": 3563,
   "classes": [
@@ -10,12 +11,12 @@
     "Problem",
     "Request"
   ],
-  "training_duration_seconds": 9.2559,
+  "training_duration_seconds": 8.5928,
   "validation_accuracy": 0.8554,
   "validation_macro_f1": 0.8622,
   "validation_weighted_f1": 0.8554,
-  "latency_p50_ms": 0.384,
-  "latency_p95_ms": 1.013,
+  "latency_p50_ms": 0.566,
+  "latency_p95_ms": 1.054,
   "classification_report": {
     "Change": {
       "precision": 0.9603174603174603,
