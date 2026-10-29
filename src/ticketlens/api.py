@@ -64,7 +64,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="TicketLens IT Ticket Classification API",
-    description="Production API for classifying IT support tickets using fine-tuned DistilBERT (LoRA) and TF-IDF baseline models.",
+    description="Classifies IT support tickets into ITIL categories with a TF-IDF + Logistic Regression model, or a fine-tuned DistilBERT (LoRA) model when its artifacts are installed.",
     version="0.1.0",
     lifespan=lifespan,
 )
